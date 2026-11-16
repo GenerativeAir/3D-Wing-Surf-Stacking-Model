@@ -51,3 +51,6 @@ warnings.filterwarnings('ignore')
 
 import IPython
 IPython.start_ipython(config=config)
+
+#comando per startare: C:\Python27\python.exe main.py dentro genair_geom.
+#comando per far partire la rappresentazione: %run trapezoidal_wing.py

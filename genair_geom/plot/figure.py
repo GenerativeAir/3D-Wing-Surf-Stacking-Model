@@ -3,7 +3,7 @@ import os
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-import Image
+from PIL import Image
 import numpy as np
 import pyglet
 
@@ -262,7 +262,7 @@ class Photographer(object):
     def read_write_framebuffer(self, out):
         w, h = self.f.width, self.f.height
         image = glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE)
-        image = Image.fromstring('RGBA', (w, h), image)
+        image = Image.frombytes('RGBA', (w, h), image)
         image.transpose(Image.FLIP_TOP_BOTTOM).save(out)
 
 
