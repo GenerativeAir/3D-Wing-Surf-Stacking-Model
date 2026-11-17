@@ -2,9 +2,9 @@ import functools
 
 import numpy as np
 
-import nurbs
-import point
-import util
+from . import nurbs
+from . import point
+from . import util
 
 import plot.pobject
 
@@ -148,7 +148,7 @@ def shear(Pw, phi, v=(0,1,0), w=(1,0,0), Q=(0,0,0)):
     '''
 
     m = Pw.reshape((-1, 4)).T
-    v, w = [util.normalize(v) for v in v, w]
+    v, w = [util.normalize(v) for v in (v, w)]
     phi = np.deg2rad(phi)
     S = np.identity(4)
     S[:3,:3] += np.tan(phi) * np.outer(w, v)

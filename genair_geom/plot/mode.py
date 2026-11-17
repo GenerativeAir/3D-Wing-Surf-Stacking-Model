@@ -4,8 +4,8 @@ from OpenGL.GL import *
 
 import numpy as np
 
-import pobject
-import util
+from . import pobject
+from . import util
 
 import nurbs
 

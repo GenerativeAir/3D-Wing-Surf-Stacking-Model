@@ -1,6 +1,6 @@
 import numpy as np
 
-import knot
+from . import knot
 
 
 def find_span(n, p, U, u):
@@ -61,7 +61,7 @@ def find_span_mult_v(n, p, U, u, num):
 
     '''
 
-    u = np.asfarray(u)
+    u = np.asarray(u)
     s = find_span_v(n, p, U, u, num)
     U = U[np.newaxis,:].repeat(num, axis=0)
     u = u[:,np.newaxis].repeat(n + p + 2, axis=1)
@@ -84,14 +84,15 @@ def basis_funs(i, u, p, U):
 
     '''
 
+    u = float(np.asarray(u).reshape(-1)[0]) if np.ndim(u) else float(u)
     N = np.zeros(p + 1)
     left = np.zeros(p + 1)
     right = np.zeros(p + 1)
     N[0] = 1.0
-    for j in xrange(1, p + 1):
+    for j in range(1, p + 1):
         left[j], right[j] = u - U[i+1-j], U[i+j] - u
         saved = 0.0
-        for r in xrange(j):
+        for r in range(j):
             tmp = N[r] / (right[r+1] + left[j-r])
             N[r] = saved + right[r+1] * tmp
             saved = left[j-r] * tmp
@@ -109,10 +110,10 @@ def basis_funs_v(i, u, p, U, num):
     left = np.zeros((p + 1, num))
     right = np.zeros((p + 1, num))
     N[0] = 1.0
-    for j in xrange(1, p + 1):
+    for j in range(1, p + 1):
         left[j], right[j] = u - U[i+1-j], U[i+j] - u
         saved = 0.0
-        for r in xrange(j):
+        for r in range(j):
             tmp = N[r] / (right[r+1] + left[j-r])
             N[r] = saved + right[r+1] * tmp
             saved = left[j-r] * tmp
@@ -132,12 +133,12 @@ def all_basis_funs(i, u, p, U):
     left = np.zeros(p + 1)
     right = np.zeros(p + 1)
     N[0,:] = 1.0
-    for p in xrange(p + 1):
-        for j in xrange(1, p + 1):
+    for p in range(p + 1):
+        for j in range(1, p + 1):
             left[j] = u - U[i+1-j]
             right[j] = U[i+j] - u
             saved = 0.0
-            for r in xrange(j):
+            for r in range(j):
                 tmp = N[r,p] / (right[r+1] + left[j-r])
                 N[r,p] = saved + right[r+1] * tmp
                 saved = left[j-r] * tmp
@@ -162,22 +163,22 @@ def ders_basis_funs(i, u, p, n, U):
     left = np.zeros(p + 1)
     right = np.zeros(p + 1)
     ndu[0,0] = 1.0
-    for j in xrange(1, p + 1):
+    for j in range(1, p + 1):
         left[j] = u - U[i+1-j]
         right[j] = U[i+j] - u
         saved = 0.0
-        for r in xrange(j):
+        for r in range(j):
             ndu[j,r] = right[r+1] + left[j-r]
             tmp = ndu[r,j-1] / ndu[j,r]
             ndu[r,j] = saved + right[r+1] * tmp
             saved = left[j-r] * tmp
         ndu[j,j] = saved
-    for j in xrange(p + 1):
+    for j in range(p + 1):
         ders[0,j] = ndu[j,p]
-    for r in xrange(p + 1):
+    for r in range(p + 1):
         s1, s2 = 0, 1
         a[0,0] = 1.0
-        for k in xrange(1, n + 1):
+        for k in range(1, n + 1):
             d = 0.0
             rk, pk = r - k, p - k
             if r >= k:
@@ -191,7 +192,7 @@ def ders_basis_funs(i, u, p, n, U):
                 j2 = k - 1
             else:
                 j2 = p - r
-            for j in xrange(j1, j2 + 1):
+            for j in range(j1, j2 + 1):
                 a[s2,j] = (a[s1,j] - a[s1,j-1]) / ndu[pk+1,rk+j]
                 d += a[s2,j] * ndu[rk+j,pk]
             if r <= pk:
@@ -200,8 +201,8 @@ def ders_basis_funs(i, u, p, n, U):
             ders[k,r] = d
             j = s1; s1 = s2; s2 = j
     r = p
-    for k in xrange(1, n + 1):
-        for j in xrange(p + 1):
+    for k in range(1, n + 1):
+        for j in range(p + 1):
             ders[k,j] *= r
         r *= p - k
     return ders
@@ -219,22 +220,22 @@ def ders_basis_funs_v(i, u, p, n, U, num):
     left = np.zeros((p + 1, num))
     right = np.zeros((p + 1, num))
     ndu[0,0] = 1.0
-    for j in xrange(1, p + 1):
+    for j in range(1, p + 1):
         left[j] = u - U[i+1-j]
         right[j] = U[i+j] - u
         saved = 0.0
-        for r in xrange(j):
+        for r in range(j):
             ndu[j,r] = right[r+1] + left[j-r]
             tmp = ndu[r,j-1] / ndu[j,r]
             ndu[r,j] = saved + right[r+1] * tmp
             saved = left[j-r] * tmp
         ndu[j,j] = saved
-    for j in xrange(p + 1):
+    for j in range(p + 1):
         ders[0,j] = ndu[j,p]
-    for r in xrange(p + 1):
+    for r in range(p + 1):
         s1, s2 = 0, 1
         a[0,0] = 1.0
-        for k in xrange(1, n + 1):
+        for k in range(1, n + 1):
             d = 0.0
             rk, pk = r - k, p - k
             if r >= k:
@@ -248,7 +249,7 @@ def ders_basis_funs_v(i, u, p, n, U, num):
                 j2 = k - 1
             else:
                 j2 = p - r
-            for j in xrange(j1, j2 + 1):
+            for j in range(j1, j2 + 1):
                 a[s2,j] = (a[s1,j] - a[s1,j-1]) / ndu[pk+1,rk+j]
                 d += a[s2,j] * ndu[rk+j,pk]
             if r <= pk:
@@ -257,8 +258,8 @@ def ders_basis_funs_v(i, u, p, n, U, num):
             ders[k,r] = d
             j = s1; s1 = s2; s2 = j
     r = p
-    for k in xrange(1, n + 1):
-        for j in xrange(p + 1):
+    for k in range(1, n + 1):
+        for j in range(p + 1):
             ders[k,j] *= r
         r *= p - k
     return ders
@@ -278,20 +279,21 @@ def one_basis_fun(p, m, U, i, u):
 
     '''
 
+    u = float(np.asarray(u).reshape(-1)[0]) if np.ndim(u) else float(u)
     N = np.zeros(p + 1)
     if ((i == 0 and u == U[0]) or (i == m - p - 1 and u == U[m])):
         return 1.0
     if u < U[i] or u >= U[i+p+1]:
         return 0.0
-    for j in xrange(p + 1):
+    for j in range(p + 1):
         if u >= U[i+j] and u < U[i+j+1]:
             N[j] = 1.0
-    for k in xrange(1, p + 1):
+    for k in range(1, p + 1):
         if N[0] == 0.0:
             saved = 0.0
         else:
             saved = ((u - U[i]) * N[0]) / (U[i+k] - U[i])
-        for j in xrange(p - k + 1):
+        for j in range(p - k + 1):
             Uleft = U[i+j+1]
             Uright = U[i+j+k+1]
             if N[j+1] == 0.0:
@@ -311,7 +313,7 @@ def one_basis_fun_v(p, m, U, i, u, num):
 
     '''
 
-    u = np.asfarray(u)
+    u = np.asarray(u)
     N = np.zeros((p + 1, num))
     cs = np.ones(num, dtype='bool')
     if i == 0:
@@ -326,15 +328,15 @@ def one_basis_fun_v(p, m, U, i, u, num):
     N[0,cs & c] = 0.0; cs[c] = False
     NN = N[:,cs]
     u = u[cs]
-    for j in xrange(p + 1):
+    for j in range(p + 1):
         NN[j,(u >= U[i+j]) & (u < U[i+j+1])] = 1.0
-    for k in xrange(1, p + 1):
+    for k in range(1, p + 1):
         if (U[i+k] - U[i]) != 0.0:
             divs = ((u - U[i]) * NN[0]) / (U[i+k] - U[i])
         else:
             divs = None
         saved = np.where(NN[0] == 0.0, 0.0, divs)
-        for j in xrange(p - k + 1):
+        for j in range(p - k + 1):
             Uleft = U[i+j+1]
             Uright = U[i+j+k+1]
             zs = NN[j+1] == 0.0; nzs = ~ zs
@@ -365,15 +367,15 @@ def ders_one_basis_fun(p, U, i, u, n):
     N = np.zeros((p + 1, p + 1))
     if u < U[i] or u >= U[i+p+1]:
         return ders
-    for j in xrange(p + 1):
+    for j in range(p + 1):
         if u >= U[i+j] and u < U[i+j+1]:
             N[j,0] = 1.0
-    for k in xrange(1, p + 1):
+    for k in range(1, p + 1):
         if N[0,k-1] == 0.0:
             saved = 0.0
         else:
             saved = ((u - U[i]) * N[0,k-1]) / (U[i+k] - U[i])
-        for j in xrange(p - k + 1):
+        for j in range(p - k + 1):
             Uleft, Uright = U[i+j+1], U[i+j+k+1]
             if N[j+1,k-1] == 0.0:
                 N[j,k] = saved
@@ -383,15 +385,15 @@ def ders_one_basis_fun(p, U, i, u, n):
                 N[j,k] = saved + (Uright - u) * tmp
                 saved = (u - Uleft) * tmp
     ders[0] = N[0,p]
-    for k in xrange(1, n + 1):
-        for j in xrange(k + 1):
+    for k in range(1, n + 1):
+        for j in range(k + 1):
             ND[j] = N[j,p-k]
-        for jj in xrange(1, k + 1):
+        for jj in range(1, k + 1):
             if ND[0] == 0.0:
                 saved = 0.0
             else:
                 saved = ND[0] / (U[i+p-k+jj] - U[i])
-            for j in xrange(k - jj + 1):
+            for j in range(k - jj + 1):
                 Uleft = U[i+j+1]
                 Uright = U[i+j+p-k+jj+1]
                 if ND[j+1] == 0.0:
@@ -411,7 +413,7 @@ def ders_one_basis_fun_v(p, U, i, u, n, num):
 
     '''
 
-    u = np.asfarray(u)
+    u = np.asarray(u)
     ders = np.zeros((n + 1, num))
     ND = np.zeros((n + 1, num))
     N = np.zeros((p + 1, p + 1, num))
@@ -420,15 +422,15 @@ def ders_one_basis_fun_v(p, U, i, u, n, num):
     c = u >= U[i+p+1]; cs[c] = False
     NN = N[:,:,cs]
     u = u[cs]
-    for j in xrange(p + 1):
+    for j in range(p + 1):
         NN[j,0,(u >= U[i+j]) & (u < U[i+j+1])] = 1.0
-    for k in xrange(1, p + 1):
+    for k in range(1, p + 1):
         if (U[i+k] - U[i]) != 0.0:
             divs = ((u - U[i]) * NN[0,k-1]) / (U[i+k] - U[i])
         else:
             divs = None
         saved = np.where(NN[0,k-1] == 0.0, 0.0, divs)
-        for j in xrange(p - k + 1):
+        for j in range(p - k + 1):
             Uleft = U[i+j+1]
             Uright = U[i+j+k+1]
             zs = NN[j+1,k-1] == 0.0; nzs = ~ zs
@@ -443,16 +445,16 @@ def ders_one_basis_fun_v(p, U, i, u, n, num):
             saved = np.where(nzs, (u - Uleft) * tmp, saved)
     ders[0,cs] = NN[0,p]
     NDD = ND[:,cs]
-    for k in xrange(1, n + 1):
-        for j in xrange(k + 1):
+    for k in range(1, n + 1):
+        for j in range(k + 1):
             NDD[j] = NN[j,p-k]
-        for jj in xrange(1, k + 1):
+        for jj in range(1, k + 1):
             if (U[i+p-k+jj] - U[i]) != 0.0:
                 divs = NDD[0] / (U[i+p-k+jj] - U[i])
             else:
                 divs = None
             saved = np.where(NDD[0] == 0.0, 0.0, divs)
-            for j in xrange(k - jj + 1):
+            for j in range(k - jj + 1):
                 Uleft = U[i+j+1]
                 Uright = U[i+j+p-k+jj+1]
                 zs = NDD[j+1] == 0.0; nzs = ~ zs

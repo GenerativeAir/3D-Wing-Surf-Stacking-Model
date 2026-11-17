@@ -1,6 +1,8 @@
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+import math
+
 import numpy as np
 
 
@@ -35,7 +37,7 @@ def normalize(V):
     norm = np.linalg.norm(V)
     if norm == 0.0:
         return V
-    return np.asfarray(V) / norm
+    return np.asarray(V) / norm
 
 def get_sphere_mapping(x, y, width, height):
     xo, yo = model_to_screen(0, 0, 0)[0:2]
@@ -55,7 +57,7 @@ def get_spherical_rotation(p1, p2, width, height, sensi):
     v2 = get_sphere_mapping(p2[0], p2[1], width, height)
     d = min(max(np.dot(v1, v2), -1), 1)
     raxis = normalize(np.cross(v1, v2))
-    rtheta = np.rad2deg(sensi) * np.math.acos(d)
+    rtheta = np.rad2deg(sensi) * math.acos(d)
     glPushMatrix()
     glLoadIdentity()
     glRotatef(rtheta, *raxis)

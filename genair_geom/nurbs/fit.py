@@ -1,12 +1,12 @@
 import numpy as np
 import scipy
 
-import basis
-import curve
-import knot
-import nurbs
-import surface
-import util
+from . import basis
+from . import curve
+from . import knot
+from . import nurbs
+from . import surface
+from . import util
 
 
 __all__ = ['refit_curve',
@@ -59,11 +59,11 @@ def global_curve_interp(n, Q, p, uk=None, U=None):
     if U is None:
         U = knot.averaging_knot_vec(n, p, uk)
     A = scipy.sparse.lil_matrix((n + 1, n + 1))
-    for i in xrange(n + 1):
+    for i in range(n + 1):
         span = basis.find_span(n, p, U, uk[i])
         A[i,span-p:span+1] = basis.basis_funs(span, uk[i], p, U)
     lu = scipy.sparse.linalg.splu(A.tocsc())
-    for i in xrange(3):
+    for i in range(3):
         rhs = Q[:,i]
         P[:,i] = lu.solve(rhs)
     Pw = nurbs.obj_mat_to_4D(P)
@@ -103,7 +103,7 @@ def global_curve_interp_ders(n, Q, p, k, Ds, l, De, uk=None):
     if p < 1 or not k < p or not l < p or n + k + l < p:
         raise ImproperInput(p, n, k, l)
     Q = nurbs.obj_mat_to_3D(Q)
-    Ds, De = [np.asfarray(V) for V in Ds, De]
+    Ds, De = [np.asarray(V) for V in (Ds, De)]
     nk = n + k; nkl = nk + l
     P = np.zeros((nkl + 1, 3))
     if uk is None:
@@ -112,13 +112,13 @@ def global_curve_interp_ders(n, Q, p, k, Ds, l, De, uk=None):
     A = scipy.sparse.lil_matrix((nkl + 1, nkl + 1))
     A[:k+1,:p+1] = \
             basis.ders_basis_funs(p, uk[0], p, k, U)
-    for i in xrange(1, n):
+    for i in range(1, n):
         span = basis.find_span(nkl, p, U, uk[i])
         A[i+k,span-p:span+1] = basis.basis_funs(span, uk[i], p, U)
     A[nkl+1:nk-1:-1,nkl-p:nkl+1] = \
             basis.ders_basis_funs(nkl, uk[-1], p, l, U)
     lu = scipy.sparse.linalg.splu(A.tocsc())
-    for i in xrange(3):
+    for i in range(3):
         rhs = Q[:,i]
         ind = k * [1] + l * [n]
         der = np.hstack((Ds[:,i]    if k else [],
@@ -174,9 +174,9 @@ def global_surf_interp(n, m, Q, p, q, uk=None, vl=None):
         if vl is None: vl = vl2
     U = knot.averaging_knot_vec(n, p, uk)
     V = knot.averaging_knot_vec(m, q, vl)
-    for l in xrange(m + 1):
+    for l in range(m + 1):
         dummy, Pw[:,l] = global_curve_interp(n, Q[:,l], p, uk, U)
-    for i in xrange(n + 1):
+    for i in range(n + 1):
         dummy, Pw[i,:] = global_curve_interp(m, Pw[i,:], q, vl, V)
     return U, V, Pw
 
@@ -213,7 +213,7 @@ def local_curve_interp(n, Q, Ts=None, Te=None):
     uk = np.zeros(n + 1)
     P = np.zeros((2 * n + 2, 3))
     P[0] = Q[0]
-    for k in xrange(n):
+    for k in range(n):
         a = 16.0 - util.norm(T[k] + T[k+1])**2
         b = 12.0 * np.dot(Q[k+1] - Q[k], T[k] + T[k+1])
         c = - 36.0 * util.norm(Q[k+1] - Q[k])**2
@@ -271,82 +271,82 @@ def local_surf_interp(n, m, Q):
     U, V = np.zeros(2 * n + 6), np.zeros(2 * m + 6)
     P = np.zeros((3 * n + 1, 3 * m + 1, 3))
     total = 0.0
-    for l in xrange(m + 1):
+    for l in range(m + 1):
         Td[:,l,0] = compute_unit_tangents(n, Q[:,l])
         r[l] = 0.0
-        for k in xrange(1, n + 1):
+        for k in range(1, n + 1):
             d = util.distance(Q[k,l], Q[k-1,l])
             uk[k] += d
             r[l] += d
         total += r[l]
-    for k in xrange(1, n):
+    for k in range(1, n):
         uk[k] = uk[k-1] + uk[k] / total
     uk[n] = 1.0
     total = 0.0
-    for k in xrange(n + 1):
+    for k in range(n + 1):
         Td[k,:,1] = compute_unit_tangents(m, Q[k,:])
         s[k] = 0.0
-        for l in xrange(1, m + 1):
+        for l in range(1, m + 1):
             d = util.distance(Q[k,l], Q[k,l-1])
             vl[l] += d
             s[k] += d
         total += s[k]
-    for l in xrange(1, m):
+    for l in range(1, m):
         vl[l] = vl[l-1] + vl[l] / total
     vl[m] = 1.0
     U[4:-4], V[4:-4] = uk[1:n].repeat(2), vl[1:m].repeat(2)
     U[-4:], V[-4:] = 1.0, 1.0
-    for l in xrange(m + 1):
-        for k in xrange(n + 1):
+    for l in range(m + 1):
+        for k in range(n + 1):
             P[3*k,3*l] = Q[k,l]
-    for l in xrange(m + 1):
-        for k in xrange(n):
+    for l in range(m + 1):
+        for k in range(n):
             a = r[l] * (uk[k+1] - uk[k]) / 3.0
             P[3*k+1,3*l] = Q[k,l] + a * Td[k,l,0]
             P[3*k+2,3*l] = Q[k+1,l] - a * Td[k+1,l,0]
-    for k in xrange(n + 1):
-        for l in xrange(m):
+    for k in range(n + 1):
+        for l in range(m):
             a = s[k] * (vl[l+1] - vl[l]) / 3.0
             P[3*k,3*l+1] = Q[k,l] + a * Td[k,l,1]
             P[3*k,3*l+2] = Q[k,l+1] - a * Td[k,l+1,1]
     Dkl = np.zeros((n + 1, m + 1, 2, 3))
-    for l in xrange(m + 1):
-        for k in xrange(n + 1):
+    for l in range(m + 1):
+        for k in range(n + 1):
             Dkl[k,l,0] = r[l] * Td[k,l,0]
             Dkl[k,l,1] = s[k] * Td[k,l,1]
     ak = np.ones(n + 1)
-    for k in xrange(1, n):
+    for k in range(1, n):
         duk, duk1 = uk[k] - uk[k-1], uk[k+1] - uk[k]
         ak[k] = duk / (duk + duk1)
     bl = np.ones(m + 1)
-    for l in xrange(1, m):
+    for l in range(1, m):
         dvl, dvl1 = vl[l] - vl[l-1], vl[l+1] - vl[l]
         bl[l] = dvl / (dvl + dvl1)
     dkl = np.zeros((n + 1, m + 1, 2, 3))
-    for k in xrange(1, n):
-        for l in xrange(m + 1):
+    for k in range(1, n):
+        for l in range(m + 1):
             duk, duk1 = uk[k] - uk[k-1], uk[k+1] - uk[k]
             dkl[k,l,0] = ((1.0 - ak[k]) * (Dkl[k,l,1] - Dkl[k-1,l,1]) / duk +
                            ak[k] * (Dkl[k+1,l,1] - Dkl[k,l,1]) / duk1)
-    for l in xrange(1, m):
-        for k in xrange(n + 1):
+    for l in range(1, m):
+        for k in range(n + 1):
             dvl, dvl1 = vl[l] - vl[l-1], vl[l+1] - vl[l]
             dkl[k,l,1] = ((1.0 - bl[l]) * (Dkl[k,l,0] - Dkl[k,l-1,0]) / dvl +
                            bl[l] * (Dkl[k,l+1,0] - Dkl[k,l,0]) / dvl1)
-    for k in xrange(n + 1):
+    for k in range(n + 1):
         dvl1, dvln = vl[1] - vl[0], vl[-1] - vl[-2]
         dkl[k,0,1] = 2.0 * (Dkl[k,1,0] - Dkl[k,0,0]) / dvl1 - dkl[k,1,0]
         dkl[k,-1,1] = 2.0 * (Dkl[k,-1,0] - Dkl[k,-2,0]) / dvln - dkl[k,-2,0]
-    for l in xrange(m + 1):
+    for l in range(m + 1):
         duk1, dukn = uk[1] - uk[0], uk[-1] - uk[-2]
         dkl[0,l,0] = 2.0 * (Dkl[1,l,1] - Dkl[0,l,1]) / duk1 - dkl[1,l,1]
         dkl[-1,l,0] = 2.0 * (Dkl[-1,l,1] - Dkl[-2,l,1]) / dukn - dkl[-2,l,1]
-    for l in xrange(m + 1):
-        for k in xrange(n + 1):
+    for l in range(m + 1):
+        for k in range(n + 1):
             Td[k,l,2] = ((ak[k] * dkl[k,l,1] + bl[l] * dkl[k,l,0]) /
                          (ak[k] + bl[l]))
-    for l in xrange(m):
-        for k in xrange(n):
+    for l in range(m):
+        for k in range(n):
             gamma = (uk[k+1] - uk[k]) * (vl[l+1] - vl[l]) / 9.0
             P[3*k+1,3*l+1] = (gamma * Td[k,l,2] +
                               P[3*k,3*l+1] + P[3*k+1,3*l] - P[3*k,3*l])
@@ -422,7 +422,7 @@ def global_curve_approx_fixedn(r, Q, p, n, uk=None, U=None, NTN=None):
             (Oe[0] * Q[r][:,np.newaxis]).T
     P = np.zeros((n + 1, 3))
     P[0], P[n] = Q[0], Q[r]
-    for i in xrange(3):
+    for i in range(3):
         rhs = np.dot(NT, R[1:-1,i])
         P[1:-1,i] = lu.solve(rhs)
     Pw = nurbs.obj_mat_to_4D(P)
@@ -465,7 +465,7 @@ def global_curve_approx_fixedn_ders(r, Q, p, n, k, Ds, l, De, uk=None):
     if not r > n:
         raise NotEnoughDataPoints(r, n)
     Q = nurbs.obj_mat_to_3D(Q)
-    Ds, De = [np.asfarray(V) for V in Ds, De]
+    Ds, De = [np.asarray(V) for V in (Ds, De)]
     if uk is None:
         uk = knot.chord_length_param(r, Q)
     U = knot.approximating_knot_vec_end(n, p, r, k, l, uk)
@@ -473,28 +473,28 @@ def global_curve_approx_fixedn_ders(r, Q, p, n, k, Ds, l, De, uk=None):
     P[0], P[n] = Q[0], Q[r]
     if k > 0:
         ders = basis.ders_basis_funs(p, uk[0], p, k, U)
-        for i in xrange(1, k + 1):
+        for i in range(1, k + 1):
             Pi = Ds[i-1]
-            for h in xrange(i):
+            for h in range(i):
                 Pi -= ders[i,h] * P[h]
             P[i] = Pi / ders[i,i]
     if l > 0:
         ders = basis.ders_basis_funs(n, uk[-1], p, l, U)
-        for j in xrange(1, l + 1):
+        for j in range(1, l + 1):
             Pj = De[j-1]
-            for h in xrange(j):
+            for h in range(j):
                 Pj -= ders[j,-h-1] * P[-h-1]
             P[-j-1] = Pj / ders[j,-j-1]
     if n > k + l + 1:
-        Ps = [P[   i][:,np.newaxis] for i in xrange(k + 1)]
-        Pe = [P[-j-1][:,np.newaxis] for j in xrange(l + 1)]
+        Ps = [P[   i][:,np.newaxis] for i in range(k + 1)]
+        Pe = [P[-j-1][:,np.newaxis] for j in range(l + 1)]
         lu, NT, Os, Oe = build_decompose_NTN(r, p, n, uk, U, k, l)
         R = Q.copy()
-        for i in xrange(k + 1):
+        for i in range(k + 1):
             R -= (Os[i] * Ps[i]).T
-        for j in xrange(l + 1):
+        for j in range(l + 1):
             R -= (Oe[j] * Pe[j]).T
-        for i in xrange(3):
+        for i in range(3):
             rhs = np.dot(NT, R[1:-1,i])
             P[k+1:-l-1,i] = lu.solve(rhs)
     Pw = nurbs.obj_mat_to_4D(P)
@@ -545,20 +545,20 @@ def global_curve_approx_fixedn_fair(r, Q, p, n, B=60):
     gx, gw = scipy.special.orthogonal.p_roots(gn)
     # precompute the N^(2) vector for each knot span
     u = []
-    for i in xrange(ni):
+    for i in range(ni):
         a, b = Uu[i], Uu[i+1]
         uu = (b - a) * (gx + 1) / 2.0 + a
         u.append(uu)
     u = np.hstack(u)
     N2 = np.zeros((n + 1, gn * ni))
-    for i in xrange(n + 1):
+    for i in range(n + 1):
         N2[i] = basis.ders_one_basis_fun_v(p, U, i, u, 2, gn * ni)[2]
     # build the (normalized) stiffness matrix K
     K = np.zeros((n + 1, n + 1))
-    for i in xrange(n + 1):
-        for j in xrange(i, min(i + p + 1, n + 1)):
+    for i in range(n + 1):
+        for j in range(i, min(i + p + 1, n + 1)):
             kij = 0.0
-            for k in xrange(ni):
+            for k in range(ni):
                 a, b = Uu[k], Uu[k+1]
                 kgn = k * gn
                 NN = N2[i,kgn:kgn+gn] * N2[j,kgn:kgn+gn]
@@ -571,7 +571,7 @@ def global_curve_approx_fixedn_fair(r, Q, p, n, B=60):
     spans = basis.find_span_v(n, p, U, uk, r + 1)
     bfuns = basis.basis_funs_v(spans, uk, p, U, r + 1)
     spans0, spans1 = spans - p, spans + 1
-    for s in xrange(r + 1):
+    for s in range(r + 1):
         N[s,spans0[s]:spans1[s]] = bfuns[:,s]
     NTN = np.dot(N.T, N)
     # build the matrix of constraints C
@@ -591,7 +591,7 @@ def global_curve_approx_fixedn_fair(r, Q, p, n, B=60):
     lu = scipy.sparse.linalg.splu(A.tocsc())
     P = np.zeros((n + 1, 3))
     rhs = np.zeros(n + 3)
-    for i in xrange(3):
+    for i in range(3):
         rhs[:n+1] = np.dot(N.T, Q[:,i])
         rhs[n+1:] = D[:,i]
         sol = lu.solve(rhs)
@@ -642,7 +642,7 @@ def global_curve_approx_errbnd(r, Q, p, E, ps=1):
     n = Pw.shape[0] - 1
     ek = np.zeros(r + 1)
     try:
-        for deg in xrange(ps, p + 1):
+        for deg in range(ps, p + 1):
             nh, Uh, dummy = remove_knots_bounds_curve(n, deg, U, Pw, uk, ek, E)
             if deg == p:
                 break
@@ -704,10 +704,10 @@ def global_surf_approx_fixednm(r, s, Q, p, q, n, m, uk=None, vl=None):
     NTNv = build_decompose_NTN(s, q, m, vl, V)
     tmp = np.zeros((n + 1, s + 1, 4))
     Pw = np.zeros((n + 1, m + 1, 4))
-    for j in xrange(s + 1):
+    for j in range(s + 1):
         dummy, tmp[:,j] = \
                 global_curve_approx_fixedn(r, Q[:,j], p, n, uk, U, NTNu)
-    for i in xrange(n + 1):
+    for i in range(n + 1):
         dummy, Pw[i,:] = \
                 global_curve_approx_fixedn(s, tmp[i,:], q, m, vl, V, NTNv)
     return U, V, Pw
@@ -819,28 +819,28 @@ def surf_mesh_params(n, m, Q):
     uk, vl = np.zeros(n + 1), np.zeros(m + 1)
     cds = np.zeros(max(n + 1, m + 1))
     uk[n] = 1.0
-    for l in xrange(m + 1):
+    for l in range(m + 1):
         total = 0.0
-        for k in xrange(1, n + 1):
+        for k in range(1, n + 1):
             cds[k] = util.distance(Q[k,l], Q[k-1,l])
             total += cds[k]
         d = 0.0
-        for k in xrange(1, n):
+        for k in range(1, n):
             d += cds[k]
             uk[k] += d / total
-    for k in xrange(1, n):
+    for k in range(1, n):
         uk[k] /= m + 1
     vl[m] = 1.0
-    for k in xrange(n + 1):
+    for k in range(n + 1):
         total = 0.0
-        for l in xrange(1, m + 1):
+        for l in range(1, m + 1):
             cds[l] = util.distance(Q[k,l], Q[k,l-1])
             total += cds[l]
         d = 0.0
-        for l in xrange(1, m):
+        for l in range(1, m):
             d += cds[l]
             vl[l] += d / total
-    for l in xrange(1, m):
+    for l in range(1, m):
         vl[l] /= n + 1
     return uk, vl
 
@@ -853,7 +853,7 @@ def compute_qks(n, Q):
     '''
 
     qk = np.zeros((n + 4, 3))
-    for k in xrange(2, n + 2):
+    for k in range(2, n + 2):
         qk[k] = Q[k-1] - Q[k-2]
     qk[1] = 2 * qk[2] - qk[3]
     qk[0] = 2 * qk[1] - qk[2]
@@ -869,7 +869,7 @@ def compute_alfs(n, qk):
     '''
 
     alf = np.zeros(n + 1)
-    for k in xrange(1, n + 2):
+    for k in range(1, n + 2):
         num = util.norm(np.cross(qk[k-1], qk[k]))
         den = num + util.norm(np.cross(qk[k+1], qk[k+2]))
         if np.allclose(den, 0.0):
@@ -889,9 +889,9 @@ def compute_unit_tangents(n, Q):
     alf = compute_alfs(n, q)
     V = np.zeros((n + 1, 3))
     T = np.zeros((n + 1, 3))
-    for k in xrange(n + 1):
+    for k in range(n + 1):
         V[k] = (1.0 - alf[k]) * q[k+1] + alf[k] * q[k+2]
-    for k in xrange(n + 1):
+    for k in range(n + 1):
         if np.allclose(V[k], 0.0):
             raise NullTangentVectorDetected(k)
         T[k] = util.normalize(V[k])
@@ -973,13 +973,13 @@ def remove_knots_bounds_curve(n, p, U, Pw, ub, ek, E):
         if Brm == np.inf:
             break
         NewError = np.zeros(nb + 1)
-        for k in xrange(nb + 1):
+        for k in range(nb + 1):
             if np.mod(p + s, 2) == 0:
-                kk = (p + s) / 2
+                kk = (p + s) // 2
                 N = basis.one_basis_fun(p, nh + p + 1, Uh, r - kk, ub[k])
                 NewError[k] = N * Brm
             elif np.mod(p + s, 2) == 1:
-                kk = (p + s + 1) / 2
+                kk = (p + s + 1) // 2
                 alf = (ur - Uh[r-kk+1]) / (Uh[r-kk+p+2] - Uh[r-kk+1])
                 N = basis.one_basis_fun(p, nh + p + 1, Uh, r - kk + 1, ub[k])
                 NewError[k] = (1.0 - alf) * N * Brm
@@ -1008,7 +1008,7 @@ def update_errors(n, p, U, Pw, r, Qw, uk, ek):
 
     '''
 
-    for k in xrange(r + 1):
+    for k in range(r + 1):
         try:
             u, = curve.curve_point_projection(n, p, U, Pw, Qw[k,:3], uk[k])
         except nurbs.NewtonLikelyDiverged as e:
@@ -1027,16 +1027,16 @@ def build_decompose_NTN(r, p, n, uk, U, k=0, l=0):
 
     m = n + p + 1
     Os = [basis.one_basis_fun_v(p, m, U, i, uk, r + 1)
-          for i in xrange(k + 1)]
+          for i in range(k + 1)]
     Oe = [basis.one_basis_fun_v(p, m, U, n - j, uk, r + 1)
-          for j in xrange(l + 1)]
+          for j in range(l + 1)]
     if k + l + 1 == n:
         return None, None, Os, Oe
     N = np.zeros((r + 1, n + 1))
     spans = basis.find_span_v(n, p, U, uk, r + 1)
     bfuns = basis.basis_funs_v(spans, uk, p, U, r + 1)
     spans0, spans1 = spans - p, spans + 1
-    for s in xrange(r + 1):
+    for s in range(r + 1):
         N[s,spans0[s]:spans1[s]] = bfuns[:,s]
     N = N[1:-1,k+1:-l-1]
     NT = N.transpose()
@@ -1069,11 +1069,11 @@ def global_surf_approx_fixednm_cntr(r, s, Q, uk, vl, nc, n, m, p, q, U, V, Pw):
     spansu0, spansu1 = spansu - p, spansu + 1
     spansv0, spansv1 = spansv - q, spansv + 1
     k, drc = 0, []
-    for i in xrange(r + 1):
+    for i in range(r + 1):
         N = np.zeros(n + 1)
         N[spansu0[i]:spansu1[i]] = bfunsu[:,i]
         N = np.repeat(N, m + 1)
-        for j in xrange(s + 1):
+        for j in range(s + 1):
             M = np.zeros(m + 1)
             M[spansv0[j]:spansv1[j]] = bfunsv[:,j]
             M = np.tile(M, n + 1)
@@ -1089,7 +1089,7 @@ def global_surf_approx_fixednm_cntr(r, s, Q, uk, vl, nc, n, m, p, q, U, V, Pw):
           'number of nonzero elements = {}'.format(C.nnz))
     nrow, ncol = (r + 1) * (s + 1), (n + 1) * (m + 1)
     inds = []
-    for i in xrange(nc, n + 1 - nc):
+    for i in range(nc, n + 1 - nc):
         ind = range(i * (m + 1) + nc, (i + 1) * (m + 1) - nc)
         inds += ind
     cols = np.arange(ncol)
@@ -1110,7 +1110,7 @@ def global_surf_approx_fixednm_cntr(r, s, Q, uk, vl, nc, n, m, p, q, U, V, Pw):
         print('nurbs.fit.global_surf_approx_fixednm_cntr :: '
               'factor is exactly singular, aborting.')
         return
-    for i in xrange(3):
+    for i in range(3):
         rhs = CiT.dot(Q[:,i])
         Bi[:,i] = lu.solve(rhs)
     Pw[nc:-nc,nc:-nc,:-1] = \

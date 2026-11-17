@@ -66,7 +66,7 @@ from pyglet.window import key
 from pyglet.window import mouse
 import pyglet
 
-import util
+from . import util
 
 KEYMAP = {key.NUM_1: 'rotate_z_neg',
           key.NUM_2: 'down',

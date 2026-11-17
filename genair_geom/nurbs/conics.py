@@ -1,10 +1,10 @@
 import numpy as np
 
-import curve
-import fit
-import knot
-import transform
-import util
+from . import curve
+from . import fit
+from . import knot
+from . import transform
+from . import util
 
 
 __all__ = ['make_circle_nrat',
@@ -81,7 +81,7 @@ def make_circle_rat(O, X, Y, r, ths, the):
     T0 = - np.sin(ths) * X + np.cos(ths) * Y
     Pw[0] = np.hstack((P0, 1.0))
     index = 0; angle = ths
-    for i in xrange(1, narcs + 1):
+    for i in range(1, narcs + 1):
         angle += dtheta
         P2 = O + r * np.cos(angle) * X + r * np.sin(angle) * Y
         Pw[index+2] = np.hstack((P2, 1.0))
@@ -158,7 +158,7 @@ def make_circle_nrat(O, X, Y, r, ths, the, p=3, TOL=1e-5):
         ns += 1
         Ds, De = (util.eval_ders_trigo(ths, k),
                   util.eval_ders_trigo(the, k))
-        for i in xrange(1, k + 1):
+        for i in range(1, k + 1):
             Ds[i] *= dth**i
             De[i] *= dth**i
         us = np.linspace(ths, the, n + 2)
@@ -180,14 +180,14 @@ def make_circle_nrat(O, X, Y, r, ths, the, p=3, TOL=1e-5):
     dtheta = np.rad2deg(the0 - ths) / ns
     cpol = curve.ControlPolygon(Pw=Pw)
     arcs = []
-    for n in xrange(ns):
+    for n in range(ns):
         arc = curve.Curve(cpol, (p,), (U,))
         arc.rotate(n * dtheta, L=[0,0,1], Q=[0,0,0])
         arcs.append(arc)
     arc = curve.make_composite_curve(arcs, remove=False)
     arc.scale(r)
     u = 1.0
-    for n in xrange(1, ns):
+    for n in range(1, ns):
         arc = arc.remove(u, k)[1]
         u += 1.0
     Z = np.cross(X, Y)
@@ -360,9 +360,9 @@ def make_open_conic(P0, T0, P2, T2, P):
 
     '''
 
-    P0, T0 = [np.asfarray(V) for V in P0, T0]
-    P2, T2 = [np.asfarray(V) for V in P2, T2]
-    P = np.asfarray(P)
+    P0, T0 = [np.asarray(V) for V in (P0, T0)]
+    P2, T2 = [np.asarray(V) for V in (P2, T2)]
+    P = np.asarray(P)
     P1, w1 = make_one_arc(P0, T0, P2, T2, P)
     if w1 <= -1.0:
         raise ParabolaOrHyperbolaOutsideConvexHull(w1)
@@ -404,7 +404,7 @@ def make_open_conic(P0, T0, P2, T2, P):
     Pw[6] = np.hstack((HS, 1.0))
     Pw[5] = np.hstack((wqr * HQ1, wqr))
     Pw[7] = np.hstack((wqr * HR1, wqr))
-    for i in xrange(2):
+    for i in range(2):
         U[i+3] = 0.25
         U[i+5] = 0.5
         U[i+7] = 0.75
@@ -422,9 +422,9 @@ def make_full_ellipse(P0, T0, P2, T2, P):
 
     '''
 
-    P0, T0 = [np.asfarray(V) for V in P0, T0]
-    P2, T2 = [np.asfarray(V) for V in P2, T2]
-    P = np.asfarray(P)
+    P0, T0 = [np.asarray(V) for V in (P0, T0)]
+    P2, T2 = [np.asarray(V) for V in (P2, T2)]
+    P = np.asarray(P)
     P1, w1 = make_one_arc(P0, T0, P2, T2, P)
     S, T = P0 - P1, P2 - P1
     k = 1.0 / w1**2
@@ -459,10 +459,10 @@ def make_full_ellipse(P0, T0, P2, T2, P):
     Pw[5] = np.hstack((w1 * (C - r1 * U - r2 * V), w1))
     Pw[6] = np.hstack((C - r2 * V, 1.0))
     Pw[7] = np.hstack((w1 * (C - r2 * V + r1 * U), w1))
-    for i in xrange(3):
+    for i in range(3):
         Uq[i] = 0.0
         Uq[i+9] = 1.0
-    for i in xrange(2):
+    for i in range(2):
         Uq[i+3] = 0.25
         Uq[i+5] = 0.5
         Uq[i+7] = 0.75

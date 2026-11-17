@@ -10,7 +10,7 @@ from nurbs.surface   import (split_nsided_region,
                              generate_inner_cross_deriv_nsided_region,
                              make_nsided_region)
 from nurbs.transform import translate
-from part            import Part
+from .part import Part
 
 from plot.figure     import Figure as draw
 

@@ -67,7 +67,7 @@ class FFDVolume(Volume):
         global ffd, args, bmin, bmax, uvws, xyzs
         ffd = self; args = self.var()
         bs = self.bounds
-        bmin, bmax = [np.asfarray(b) for b in zip(*bs)]
+        bmin, bmax = [np.asarray(b) for b in zip(*bs)]
         us = construct_flat_grid(self.U, 3 * (num,))
         uvws = us; xyzs = self.eval_points(*us)
 

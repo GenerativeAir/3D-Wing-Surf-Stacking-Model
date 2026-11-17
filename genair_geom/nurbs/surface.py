@@ -31,18 +31,18 @@ tensor product surface.
 
 import numpy as np
 from scipy.linalg import lstsq
-from scipy.misc import comb
+from math import comb
 from scipy.optimize import fmin
 
-import basis
-import conics
-import curve
-import fit
-import knot
-import nurbs
-import point
-import transform
-import util
+from . import basis
+from . import conics
+from . import curve
+from . import fit
+from . import knot
+from . import nurbs
+from . import point
+from . import transform
+from . import util
 
 import plot.pobject
 
@@ -396,7 +396,7 @@ class Surface(nurbs.NURBSObject, plot.pobject.PlotSurface):
             return None
         Sext, dummy = Ss
         Pw, cpts = Sext.cobj.Pw, Sext.cobj.cpts
-        for col in xrange(m + 1):
+        for col in range(m + 1):
             Q, N = [cpt.xyz for cpt in cpts[:2,col]]
             transform.mirror(Pw[:,col], N - Q, Q)
         U = Sext.U[0]; U -= U[0]
@@ -422,7 +422,7 @@ class Surface(nurbs.NURBSObject, plot.pobject.PlotSurface):
 
         n, p, U, m, q, V, Pw = self.var()
         if len(X) != 0:
-            if X == 'mid':
+            if isinstance(X, str) and X == 'mid':
                 if di == 0:
                     X = knot.midpoints_knot_vec(U)
                 elif di == 1:
@@ -448,11 +448,11 @@ class Surface(nurbs.NURBSObject, plot.pobject.PlotSurface):
         n, p, U, m, q, V, Pw = self.var()
         nbs, Ubs, Pws = decompose_surface(n, p, U, m, q, V, Pw, 0)
         Ss = []
-        for bs in xrange(nbs):
+        for bs in range(nbs):
             S = Surface(ControlNet(Pw=Pws[bs]), (p,q), (Ubs[bs],V))
             n, p, U, m, q, V, Pw = S.var()
             nb, Ub, Pw = decompose_surface(n, p, U, m, q, V, Pw, 1)
-            for b in xrange(nb):
+            for b in range(nb):
                 S = Surface(ControlNet(Pw=Pw[b]), (p,q), (Ubs[bs], Ub[b]))
                 Ss.append(S)
         return Ss
@@ -771,18 +771,18 @@ def surface_deriv_cpts(n, p, U, m, q, V, P, d, r1, r2, s1, s2):
     r, s = r2 - r1, s2 - s1
     PKL = np.zeros((d + 1, d + 1, r + 1, s + 1, 3))
     du, dv = min(d, p), min(d, q)
-    for j in xrange(s1, s2 + 1):
+    for j in range(s1, s2 + 1):
         tmp = curve.curve_deriv_cpts(n, p, U, P[:,j], du, r1, r2)
-        for k in xrange(du + 1):
-            for i in xrange(r - k + 1):
+        for k in range(du + 1):
+            for i in range(r - k + 1):
                 PKL[k,0,i,j-s1] = tmp[k,i]
-    for k in xrange(du):
-        for i in xrange(r - k + 1):
+    for k in range(du):
+        for i in range(r - k + 1):
             dd = min(d - k, dv)
             tmp = curve.curve_deriv_cpts(m, q, V[s1:], PKL[k,0,i,:],
                                           dd, 0, s)
-            for l in xrange(1, dd + 1):
-                for j in xrange(s - l + 1):
+            for l in range(1, dd + 1):
+                for j in range(s - l + 1):
                     PKL[k,l,i,j] = tmp[l,j]
     return PKL
 
@@ -807,14 +807,14 @@ def surface_derivs_alg1(n, p, U, m, q, V, P, u, v, d):
     Nu = basis.ders_basis_funs(uspan, u, p, du, U)
     vspan = basis.find_span(m, q, V, v)
     Nv = basis.ders_basis_funs(vspan, v, q, dv, V)
-    for k in xrange(du + 1):
+    for k in range(du + 1):
         tmp[:] = 0.0
-        for s in xrange(q + 1):
-            for r in xrange(p + 1):
+        for s in range(q + 1):
+            for r in range(p + 1):
                 tmp[s] += Nu[k,r] * P[uspan-p+r,vspan-q+s]
         dd = min(d - k, dv)
-        for l in xrange(dd + 1):
-            for s in xrange(q + 1):
+        for l in range(dd + 1):
+            for s in range(q + 1):
                 SKL[k,l] += Nv[l,s] * tmp[s]
     return SKL
 
@@ -836,13 +836,13 @@ def surface_derivs_alg2(n, p, U, m, q, V, P, u, v, d):
     Nv = basis.all_basis_funs(vspan, v, q, V)
     PKL = surface_deriv_cpts(n, p, U, m, q, V, P, d,
                              uspan - p, uspan, vspan - q, vspan)
-    for k in xrange(du + 1):
+    for k in range(du + 1):
         dd = min(d - k, dv)
-        for l in xrange(dd + 1):
+        for l in range(dd + 1):
             SKL[k,l] = 0.0
-            for i in xrange(q - l + 1):
+            for i in range(q - l + 1):
                 tmp = 0.0
-                for j in xrange(p - k + 1):
+                for j in range(p - k + 1):
                     tmp += Nu[j,p-k] * PKL[k,l,j,i]
                 SKL[k,l] += Nv[i,q-l] * tmp
     return SKL
@@ -863,10 +863,10 @@ def rat_surface_point(n, p, U, m, q, V, Pw, u, v):
     Nu = basis.basis_funs(uspan, u, p, U)
     vspan = basis.find_span(m, q, V, v)
     Nv = basis.basis_funs(vspan, v, q, V)
-    for l in xrange(q + 1):
-        for k in xrange(p + 1):
+    for l in range(q + 1):
+        for k in range(p + 1):
             tmp[l] += Nu[k] * Pw[uspan-p+k,vspan-q+l]
-    for l in xrange(q + 1):
+    for l in range(q + 1):
         Sw += Nv[l] * tmp[l]
     return Sw[:3] / Sw[-1]
 
@@ -877,17 +877,17 @@ def rat_surface_point_v(n, p, U, m, q, V, Pw, u, v, num):
 
     '''
 
-    u, v = [np.asfarray(u) for u in u, v]
+    u, v = [np.asarray(u) for u in (u, v)]
     Sw = np.zeros((4, num))
     tmp = np.zeros((q + 1, 4, num))
     uspan = basis.find_span_v(n, p, U, u, num)
     Nu = basis.basis_funs_v(uspan, u, p, U, num)
     vspan = basis.find_span_v(m, q, V, v, num)
     Nv = basis.basis_funs_v(vspan, v, q, V, num)
-    for l in xrange(q + 1):
-        for k in xrange(p + 1):
+    for l in range(q + 1):
+        for k in range(p + 1):
             tmp[l] += Nu[k] * Pw[uspan-p+k,vspan-q+l].T
-    for l in xrange(q + 1):
+    for l in range(q + 1):
         Sw += Nv[l] * tmp[l]
     return Sw[:3] / Sw[-1]
 
@@ -906,13 +906,13 @@ def rat_surface_derivs(Aders, wders, d):
     '''
 
     SKL = np.zeros((d + 1, d + 1, 3))
-    for k in xrange(d + 1):
-        for l in xrange(d - k + 1):
+    for k in range(d + 1):
+        for l in range(d - k + 1):
             v = Aders[k,l]
-            for j in xrange(1, l + 1):
+            for j in range(1, l + 1):
                 v -= comb(l, j) * wders[0,j] * SKL[k,l-j]
-            for i in xrange(1, k + 1):
-                for j in xrange(l + 1):
+            for i in range(1, k + 1):
+                for j in range(l + 1):
                     v -= (comb(k, i) * comb(l, j) *
                           wders[i,j] * SKL[k-i,l-j])
             SKL[k,l] = v / wders[0,0]
@@ -937,13 +937,13 @@ def surface_knot_ins(n, p, U, m, q, V, Pw, u, k, s, r, di):
     if di == 0:
         VQ = V.copy()
         Qw = np.zeros((n + r + 1, m + 1, 4))
-        for col in xrange(m + 1):
+        for col in range(m + 1):
             UQ, Qw[:,col] = \
                     curve.curve_knot_ins(n, p, U, Pw[:,col], u, k, s, r)
     elif di == 1:
         UQ = U.copy()
         Qw = np.zeros((n + 1, m + r + 1, 4))
-        for row in xrange(n + 1):
+        for row in range(n + 1):
             VQ, Qw[row,:] = \
                     curve.curve_knot_ins(m, q, V, Pw[row,:], u, k, s, r)
     return UQ, VQ, Qw
@@ -963,12 +963,12 @@ def refine_knot_vect_surface(n, p, U, m, q, V, Pw, X, di):
     if di == 0:
         VQ = V.copy()
         Qw = np.zeros((n + r + 2, m + 1, 4))
-        for col in xrange(m + 1):
+        for col in range(m + 1):
             UQ, Qw[:,col] = curve.refine_knot_vect_curve(n, p, U, Pw[:,col], X)
     elif di == 1:
         UQ = U.copy()
         Qw = np.zeros((n + 1, m + r + 2, 4))
-        for row in xrange(n + 1):
+        for row in range(n + 1):
             VQ, Qw[row,:] = curve.refine_knot_vect_curve(m, q, V, Pw[row,:], X)
     return UQ, VQ, Qw
 
@@ -988,12 +988,12 @@ def decompose_surface(n, p, U, m, q, V, Pw, di):
     if di == 0:
         ni = np.unique(U[p+1:n+1]).size
         Qw = np.zeros((ni + 1, p + 1, m + 1, 4))
-        for col in xrange(m + 1):
+        for col in range(m + 1):
             nb, Ub, Qw[:,:,col] = curve.decompose_curve(n, p, U, Pw[:,col])
     elif di == 1:
         ni = np.unique(V[q+1:m+1]).size
         Qw = np.zeros((ni + 1, n + 1, q + 1, 4))
-        for row in xrange(n + 1):
+        for row in range(n + 1):
             nb, Ub, Qw[:,row,:] = curve.decompose_curve(m, q, V, Pw[row,:])
     return nb, Ub, Qw
 
@@ -1011,7 +1011,7 @@ def remove_surface_knot(n, p, U, m, q, V, Pw, u, r, s, num, d, di):
 
     if di == 0:
         VQ = V.copy()
-        for col in xrange(m + 1):
+        for col in range(m + 1):
             nr, UQ, Q = curve.remove_curve_knot(n, p, U, Pw[:,col],
                                                 u, r, s, num, d)
             if col == 0:
@@ -1022,7 +1022,7 @@ def remove_surface_knot(n, p, U, m, q, V, Pw, u, r, s, num, d, di):
             Qw[:,col] = Q
     elif di == 1:
         UQ = U.copy()
-        for row in xrange(n + 1):
+        for row in range(n + 1):
             nr, VQ, Q = curve.remove_curve_knot(m, q, V, Pw[row,:],
                                                 u, r, s, num, d)
             if row == 0:
@@ -1060,7 +1060,7 @@ def remove_surface_uknots(n, p, U, m, Pw, d=1e-3):
     bgap = r; agap = bgap + 1
     while True:
         nr = 0
-        for t in xrange(s):
+        for t in range(s):
             remflag = 1
             lf2 = last - first + 2
             i = first; j = last
@@ -1070,7 +1070,7 @@ def remove_surface_uknots(n, p, U, m, Pw, d=1e-3):
                 i += 1; j -= 1
             if j - i == t:
                 alfas[i-first+1] = (u - U[i]) / (U[i+o+gap+t] - U[i])
-            for k in xrange(m + 1):
+            for k in range(m + 1):
                 ki = first - 1; kj = last + 1
                 tmp[k,0] = Pw[ki,k]; tmp[k,lf2] = Pw[kj,k]
                 ki += 1; kj -= 1; i = 1; j = lf2 - 1
@@ -1092,7 +1092,7 @@ def remove_surface_uknots(n, p, U, m, Pw, d=1e-3):
             if remflag == 0:
                 break
             nr += 1
-            for k in xrange(m + 1):
+            for k in range(m + 1):
                 ki, kj = first, last
                 i, j = 1, lf2 - 1
                 while j - i > t:
@@ -1101,15 +1101,15 @@ def remove_surface_uknots(n, p, U, m, Pw, d=1e-3):
             first -= 1; last += 1
         if nr > 0:
             j = fout; i = j
-            for k in xrange(1, nr):
+            for k in range(1, nr):
                 if (np.mod(k, 2) == 1):
                     i += 1
                 else:
                     j -= 1
             i += 1
-            for k in xrange(m + 1):
+            for k in range(m + 1):
                 kj = j
-                for ki in xrange(i, bgap + 1):
+                for ki in range(i, bgap + 1):
                     Pw[kj,k] = Pw[ki,k]
                     kj += 1
             bgap -= nr
@@ -1125,9 +1125,9 @@ def remove_surface_uknots(n, p, U, m, Pw, d=1e-3):
             s = i - j; r = i - 1
             gap += nr
             ki = bgap + 1
-            for k in xrange(m + 1):
+            for k in range(m + 1):
                 i = ki
-                for j in xrange(s):
+                for j in range(s):
                     Pw[i,k] = Pw[agap+j,k]
                     i += 1
             bgap += s; agap += s
@@ -1136,7 +1136,7 @@ def remove_surface_uknots(n, p, U, m, Pw, d=1e-3):
     if gap == 0:
         return gap, U, Pw
     i = hispan + 1; k = i - gap
-    for j in xrange(1, o + 1):
+    for j in range(1, o + 1):
         U[k] = U[i]
         k += 1; i += 1
     UQ = U[:-gap]; Qw = Pw[:-gap,:]
@@ -1160,13 +1160,13 @@ def degree_elevate_surface(n, p, U, m, q, V, Pw, t, di):
         VQ = V.copy()
         nh = curve.mult_degree_elevate(n, p, U, t)[0]
         Qw = np.zeros((nh + 1, m + 1, 4))
-        for col in xrange(m + 1):
+        for col in range(m + 1):
             UQ, Qw[:,col] = curve.degree_elevate_curve(n, p, U, Pw[:,col], t)
     elif di == 1:
         UQ = U.copy()
         mh = curve.mult_degree_elevate(m, q, V, t)[0]
         Qw = np.zeros((n + 1, mh + 1, 4))
-        for row in xrange(n + 1):
+        for row in range(n + 1):
             VQ, Qw[row,:] = curve.degree_elevate_curve(m, q, V, Pw[row,:], t)
     return UQ, VQ, Qw
 
@@ -1184,13 +1184,13 @@ def degree_reduce_surface(n, p, U, m, q, V, Pw, d, di):
         VQ = V.copy()
         nh = curve.mult_degree_reduce(n, p, U)
         Qw = np.zeros((nh + 1, m + 1, 4))
-        for col in xrange(m + 1):
+        for col in range(m + 1):
             UQ, Qw[:,col] = curve.degree_reduce_curve(n, p, U, Pw[:,col], d)
     elif di == 1:
         UQ = U.copy()
         mh = curve.mult_degree_reduce(m, q, V)
         Qw = np.zeros((n + 1, mh + 1, 4))
-        for row in xrange(n + 1):
+        for row in range(n + 1):
             VQ, Qw[row,:] = curve.degree_reduce_curve(m, q, V, Pw[row,:], d)
     return UQ, VQ, Qw
 
@@ -1224,7 +1224,7 @@ def surface_point_projection(n, p, U, m, q, V, Pw, Pi,
     rat = (w != 1.0).any()
     J = np.zeros((2, 2))
     K = np.zeros(2)
-    for ni in xrange(20): # knob
+    for ni in range(20): # knob
         SKL = surface_derivs_alg1(n, p, U, m, q, V, P, ui, vi, 2)
         if rat:
             wders = surface_derivs_alg1(n, p, U, m, q, V, w, ui, vi, 2)
@@ -1277,12 +1277,12 @@ def reverse_surface_direction(n, p, U, m, q, V, Pw, di):
     if di == 0:
         T = V.copy()
         Qw = np.zeros((n + 1, m + 1, 4))
-        for col in xrange(m + 1):
+        for col in range(m + 1):
             S, Qw[:,col] = curve.reverse_curve_direction(n, p, U, Pw[:,col])
     elif di == 1:
         S = U.copy()
         Qw = np.zeros((n + 1, m + 1, 4))
-        for row in xrange(n + 1):
+        for row in range(n + 1):
             T, Qw[row,:] = curve.reverse_curve_direction(m, q, V, Pw[row,:])
     return S, T, Qw
 
@@ -1363,10 +1363,10 @@ def surface_surface_intersect(S0, S1, P0, CRT=5e-3, ANT=1e-2):
         global s, t, u, v
 
         l2ns = []
-        for S in S0, S1:
+        for S in (S0, S1):
             U, V = S.U
-            uedi = zip([U[0], U[-1], V[0], V[-1]],
-                       [0, 0, 1, 1])
+            uedi = list(zip([U[0], U[-1], V[0], V[-1]],
+                       [0, 0, 1, 1]))
             for ue, di in uedi:
                 C = S.extract(ue, di)
                 try:
@@ -1424,7 +1424,7 @@ def surface_surface_intersect(S0, S1, P0, CRT=5e-3, ANT=1e-2):
         global s, t, u, v
 
         Pi = P0 + L * V
-        for ni in xrange(50): # knob
+        for ni in range(50): # knob
             try:
                 arg0 = args0 + (Pi, (s, t)) + PST
                 arg1 = args1 + (Pi, (u, v)) + PST
@@ -1740,11 +1740,11 @@ def make_revolved_surface_rat(G, S, T, theta):
     angle = 0.0
     cosines = np.zeros(narcs + 1)
     sines = np.zeros(narcs + 1)
-    for i in xrange(1, narcs + 1):
+    for i in range(1, narcs + 1):
         angle += dtheta
         cosines[i] = np.cos(angle)
         sines[i] = np.sin(angle)
-    for j in xrange(m + 1):
+    for j in range(m + 1):
         O = util.point_to_line(S, T, Pj[j])
         X = Pj[j] - O
         if (X == 0.0).all():
@@ -1759,7 +1759,7 @@ def make_revolved_surface_rat(G, S, T, theta):
         wij[0,j] = wj[j]
         T0 = Y
         ind = 0
-        for i in xrange(1, narcs + 1):
+        for i in range(1, narcs + 1):
             P2 = O + r * cosines[i] * X + r * sines[i] * Y
             Pij[ind+2,j] = P2
             wij[ind+2,j] = wj[j]
@@ -1770,7 +1770,7 @@ def make_revolved_surface_rat(G, S, T, theta):
             if i < narcs:
                 P0, T0 = P2, T2
     j = 3 + 2 * (narcs - 1)
-    for i in xrange(3):
+    for i in range(3):
         U[i+j] = 1.0
     if narcs == 2:
         U[3] = U[4] = 0.5
@@ -1824,7 +1824,7 @@ def make_revolved_surface_nrat(G, S, T, theta, p=3, TOL=1e-5):
     O = np.zeros((m + 1, 3)); X, Y = O.copy(), O.copy()
     r = np.zeros(m + 1)
     Pj = nurbs.obj_mat_to_3D(Pw)
-    for j in xrange(m + 1):
+    for j in range(m + 1):
         O[j] = util.point_to_line(S, T, Pj[j])
         X[j] = Pj[j] - O[j]
         r[j] = util.norm(X[j])
@@ -1835,7 +1835,7 @@ def make_revolved_surface_nrat(G, S, T, theta, p=3, TOL=1e-5):
     Mc = conics.make_circle_nrat(O[jm], X[jm], Y[jm], rm, 0, theta, p, TOL)
     n, p, U, Pw = Mc.var()
     Pij = np.zeros((n + 1, m + 1, 3))
-    for j in xrange(m + 1):
+    for j in range(m + 1):
         Qw = Pw.copy()
         transform.translate(Qw, O[j] - O[jm])
         transform.scale(Qw, r[j]/rm, O[j])
@@ -1901,9 +1901,9 @@ def make_skinned_surface(Cs, q, vb=None):
         vb = knot.skinned_param(n, K, Q)
     V = knot.averaging_knot_vec(K, q, vb)
     Qw = np.zeros((n + 1, K + 1, 4))
-    for i in xrange(n + 1):
+    for i in range(n + 1):
         P = np.zeros((K + 1, 3))
-        for k in xrange(K + 1):
+        for k in range(K + 1):
             P[k] = Cs[k].cobj.Pw[i,:-1]
         V, Qw[i,:] = fit.global_curve_interp(K, P, q, vb, V)
     return Surface(ControlNet(Pw=Qw), (p,q), (U,V))
@@ -1976,13 +1976,13 @@ def make_swept_surface(C, T, Bv, K, scs=None, Ce=None, local=None):
         nsect = ktv - q - 1
     vb = np.zeros(nsect)
     vb[0] = V[0]
-    for k in xrange(1, nsect - 1):
+    for k in range(1, nsect - 1):
         vb[k] = sum(V[k+1:k+q+1]) / q
     vb[nsect-1] = V[-1]
     local = get_sweep_local_sys if not local else local
     I = np.identity(3)
     Qw = np.zeros((n + 1, nsect, 4))
-    for k in xrange(nsect):
+    for k in range(nsect):
         v = vb[k]
         if Ce:
             #BWB
@@ -2003,7 +2003,7 @@ def make_swept_surface(C, T, Bv, K, scs=None, Ce=None, local=None):
                     transform.scale(Qw[:,k], sf, L=di)
         O, X, Y, Z = local(v, T, Bv)
         transform.custom(Qw[:,k], R=np.column_stack((X, Y, Z)), T=O)
-    for i in xrange(n + 1):
+    for i in range(n + 1):
         V, Qw[i,:] = fit.global_curve_interp(nsect - 1, Qw[i,:], q, vb, V)
     return Surface(ControlNet(Pw=Qw), (p,q), (U,V))
 
@@ -2060,9 +2060,9 @@ def make_gordon_surface(Ck, Cl, ul, vk, pc=None, qc=None):
     if len(ul) - 1 != s or len(vk) - 1 != r:
         raise ImproperInput(s, r)
     Q = np.zeros((s + 1, r + 1, 3))
-    for l in xrange(s + 1):
+    for l in range(s + 1):
         cl = Cl[l]
-        for k in xrange(r + 1):
+        for k in range(r + 1):
             ck = Ck[k]
             Qlk1, Qlk2 = cl.eval_point(vk[k]), ck.eval_point(ul[l])
             l2n = util.distance(Qlk1, Qlk2)
@@ -2255,7 +2255,7 @@ def make_nsided_region(CLRk, DLRk, CIk, BLRk, eps=1):
 
     N = len(CLRk) - 1
     Ss = []
-    for k in xrange(N + 1):
+    for k in range(N + 1):
         Ck = [CLRk[k][0], CIk[np.mod(k - 1, N + 1)]]
         Cl = [CLRk[np.mod(k - 1, N + 1)][1], CIk[k]]
         Dk = [DLRk[k][0], BLRk[np.mod(k - 1, N + 1)][0]]
@@ -2389,7 +2389,7 @@ def make_surfaces_compatible2(Ss, di=1):
     U = sl.U[di]; U -= U[0]
     knot.clean_knot_vec(U)
     for sr in Ss2[1:]:
-        for i in xrange(sr.cobj.n[t0] + 1):
+        for i in range(sr.cobj.n[t0] + 1):
             lP = sl.cobj.cpts[(-1,i) if di == 0 else (i,-1)].xyz
             fP = sr.cobj.cpts[( 0,i) if di == 0 else (i, 0)].xyz
             l2n = util.norm(lP - fP)
@@ -2453,12 +2453,12 @@ def find_common_edges(sl, sr):
         cl[k] = sl.cobj.cpts[ij].xyz
         cr[k] = sr.cobj.cpts[ij].xyz
     crns = []
-    for l in xrange(4):
-        for r in xrange(4):
+    for l in range(4):
+        for r in range(4):
             l2n = util.norm(cl[l] - cr[r])
             if l2n < 1e-3:
                 crns.append((l, r))
-    edgs = zip(*crns)
+    edgs = list(zip(*crns))
     if ((len(crns) != 2) or
         (not all([edgs[i] in edgemap for i in (0, 1)]))):
         raise NoCommonEdgeCouldBeFound(sl, sr)
@@ -2489,7 +2489,7 @@ def reorient_surfaces(Ss):
                    (1, 0, 3, 2): 'reverse(0).reverse(1)'}
 
     Ss = list(Ss)
-    for k in xrange(len(Ss) - 1):
+    for k in range(len(Ss) - 1):
         el, er, swap = find_common_edges(Ss[k], Ss[k+1])
         if k == 0:
             if el == 0:
@@ -2565,18 +2565,18 @@ def get_sweep_orient_func(B0, T, Tp=None, Tw=None, m=10):
 
     V, = T.U; vb = np.linspace(V[0], V[-1], m)
     Ti = np.zeros((m, 3))
-    for i in xrange(m):
+    for i in range(m):
         t = T.eval_derivatives(vb[i], 1)[1]
         if Tp is not None:
             t = util.point_to_plane((0,0,0), Tp, t)
         Ti[i] = util.normalize(t)
     B = np.zeros_like(Ti)
     B[0] = util.normalize(B0)
-    for i in xrange(1, m):
+    for i in range(1, m):
         Bi = util.point_to_plane((0,0,0), Ti[i], B[i-1])
         B[i] = util.normalize(Bi)
     if Tw:
-        for i in xrange(m):
+        for i in range(m):
             b = np.append(B[i], 1.0)
             R = Tw.eval_point(vb[i])[0]
             transform.rotate(b, R, L=Ti[i])
@@ -2599,7 +2599,7 @@ def get_sweep_local_sys(v, T, Bv):
     O, Y = T.eval_derivatives(v, 1)
     Z = Bv.eval_point(v)
     X = np.cross(Y, Z)
-    X, Y, Z = [util.normalize(V) for V in X, Y, Z]
+    X, Y, Z = [util.normalize(V) for V in (X, Y, Z)]
     return O, X, Y, Z
 
 
@@ -2642,7 +2642,7 @@ def blend_cubic_bezier(n, p, U, Cs, Ds, di=0):
     S = np.zeros((n + 1, 4, 3))
     C0, C1 = [c.cobj.Pw[:,:-1] for c in Cs]
     D0, D1 = [d.cobj.Pw[:,:-1] for d in Ds]
-    for i in xrange(n + 1):
+    for i in range(n + 1):
         S[i,0] = C0[i]
         S[i,1] = C0[i] + D0[i] / 3.0
         S[i,2] = C1[i] - D1[i] / 3.0
@@ -2765,8 +2765,8 @@ def make_twist_compatible(Dk, Dl, eps):
                       Dl[0].eval_derivatives(1, 1)[1]), axis=0)
     T11 = np.average((Dk[1].eval_derivatives(1, 1)[1],
                       Dl[1].eval_derivatives(1, 1)[1]), axis=0)
-    DTTks = zip(Dk, (T00, T01), (T10, T11))
-    DTTls = zip(Dl, (T00, T10), (T01, T11))
+    DTTks = list(zip(Dk, (T00, T01), (T10, T11)))
+    DTTls = list(zip(Dl, (T00, T10), (T01, T11)))
     Dk = [reapprox_curve_end_ders(eps, *DTT) for DTT in DTTks]
     Dl = [reapprox_curve_end_ders(eps, *DTT) for DTT in DTTls]
     return Dk, Dl
@@ -2841,7 +2841,7 @@ def split_nsided_region(Ck, Dk):
     DMk = np.zeros((N + 1, 3))
     AL = np.zeros(N + 1)
     CLRk, DLRk = [], []
-    for k in xrange(N + 1):
+    for k in range(N + 1):
         ck, dk = Ck[k], Dk[k]
         U, = ck.U
         AL[k] = curve.param_to_arc_length(ck)
@@ -2855,7 +2855,7 @@ def split_nsided_region(Ck, Dk):
             U, = c.U; knot.normalize_knot_vec(U)
         CLRk.append((cl, cr))
         DLRk.append((dl, dr))
-    for k in xrange(N + 1):
+    for k in range(N + 1):
         sf = (AL[np.mod(k - 1, N + 1)] +
               AL[np.mod(k + 1, N + 1)]) / 4.0
         DMk[k] = sf * util.normalize(DMk[k])
@@ -2918,11 +2918,11 @@ def generate_inner_curves_nsided_region(C, CN, Mk, DMk):
     N = len(Mk) - 1
     P = np.zeros((4, 3))
     CIk = []
-    for k in xrange(N + 1):
+    for k in range(N + 1):
         P[0], P[3] = Mk[k], C
         Ts = DMk[k]
         Te = C - util.point_to_plane(C, CN, Mk[k])
-        Ts, Te = [util.normalize(T) for T in Ts, Te]
+        Ts, Te = [util.normalize(T) for T in (Ts, Te)]
         a = 16.0 - util.norm(Ts + Te)**2
         b = 12.0 * (P[3] - P[0]).dot(Ts + Te)
         c = - 36.0 * util.norm(P[3] - P[0])**2
@@ -2980,7 +2980,7 @@ def generate_inner_cross_deriv_nsided_region(CN, CIk, CLRk):
 
     N = len(CIk) - 1
     BLRk = []
-    for k in xrange(N + 1):
+    for k in range(N + 1):
         cl, cr = CLRk[k]
         ci, cim1, cip1 = (CIk[k],
                           CIk[np.mod(k - 1, N + 1)],

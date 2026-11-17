@@ -2,7 +2,7 @@ from OpenGL.GL import *
 
 import numpy as np
 
-import util
+from . import util
 
 
 class Camera(object):

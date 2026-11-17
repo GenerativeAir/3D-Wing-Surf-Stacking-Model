@@ -9,12 +9,12 @@ import pandas as pd
 
 from src.config import PROJECT_ROOT
 
-try:
-    from src.main_data import X_FIXED
-except Exception:
-    theta = np.linspace(0.0, np.pi, 50)
-    X_FIXED = (1.0 - np.cos(theta)) / 2.0
-    X_FIXED[0] = 1.0e-4
+# Griglia x fissa, identica a src.main_data.X_FIXED ma calcolata localmente:
+# importare main_data qui lancerebbe il parsing di tutti i file .txt di
+# Airfoil_txt ad ogni import (anche in predict_fast.py, vanificando la cache).
+theta = np.linspace(0.0, np.pi, 50)
+X_FIXED = (1.0 - np.cos(theta)) / 2.0
+X_FIXED[0] = 1.0e-4
 
 
 MACH_DEFAULT = 0.0

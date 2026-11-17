@@ -21,12 +21,12 @@ from plot.figure   import Figure as draw
 #    N stazioni: AIRFOIL/TWIST/CHORD hanno N elementi,
 #    SPAN/DIHEDRAL/SWEEP ne hanno N-1 (uno per segmento)
 # ------------------------------------------------------------------
-AIRFOIL  = ['n0012.dat', 'n0012.dat', 'n0012.dat']
-TWIST    = [0, 0, 0]              # torsione [gradi] per stazione
+AIRFOIL  = ['generated_LDS-2_AIRFOIL_lds2-il.dat', 'generated_LDS-2_AIRFOIL_lds2-il.dat', 'generated_LDS-2_AIRFOIL_lds2-il.dat']
+TWIST    = [0, 10, 40]              # torsione [gradi] per stazione
 CHORD    = [5.82, 3.40, 0.78]     # corda per stazione [m]
 SPAN     = [4.66, 8.44]           # apertura di ogni segmento [m]
-DIHEDRAL = [2, 2]                 # diedro di ogni segmento [gradi]
-SWEEP    = [30, 30]               # freccia di ogni segmento [gradi]
+DIHEDRAL = [2, 5]                 # diedro di ogni segmento [gradi]
+SWEEP    = [30, 20]               # freccia di ogni segmento [gradi]
 REF      = 'LE'                   # curva per lo sweep: 'LE', 'QC' o 'TE'
 K_FIT    = 1                      # alza a 5-10 se usi twist non nullo
 
@@ -69,7 +69,7 @@ class TrapezoidalWing(Wing):
 #    (merge(show=False): il WingMerger trasla da solo i segmenti)
 # ------------------------------------------------------------------
 ws = []
-for i in xrange(len(airs) - 1):
+for i in range(len(airs) - 1):
     w = TrapezoidalWing(airs[i], airs[i+1],
                         TWIST[i],  TWIST[i+1],
                         CHORD[i],  CHORD[i+1],

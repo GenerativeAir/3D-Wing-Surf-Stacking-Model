@@ -1,6 +1,6 @@
 import numpy as np
 
-from part          import Part
+from .part import Part
 
 from nurbs.conics  import make_one_arc
 from nurbs.curve   import (ControlPolygon,
@@ -103,9 +103,9 @@ class Wingtip(Part):
                 C, C2 = CC2
 
                 # linear morphing
-                for i in xrange(1, n):
+                for i in range(1, n):
                     lmy = np.sin(np.pi * float(i - 1) / float(n - 2))
-                    cpt, cpt2 = [c.cobj.cpts[i].xyz for c in C, C2]
+                    cpt, cpt2 = [c.cobj.cpts[i].xyz for c in (C, C2)]
                     x, y, z = lmy * cpt + (1.0 - lmy) * cpt2
                     C.cobj.cpts[i].xyzw = x, y, z, 1.0
 
@@ -128,7 +128,7 @@ class Wingtip(Part):
         h0, h1 = hs
         h0 = h0.reverse(0)
         h1 = h1.reverse(0).reverse(1)
-        for h in h0, h1:
+        for h in (h0, h1):
             h.colorize()
         self.nurbs = nurbs
         self.halves = [h0, h1]
@@ -214,7 +214,7 @@ class Wingtip(Part):
                   for h in self._hs]
         h0 = h0.reverse(0)
         h1 = h1.reverse(0).reverse(1)
-        for h in h0, h1:
+        for h in (h0, h1):
             V = h.U[1]; remap_knot_vec(V, 0.0, 0.5)
         nurbs = make_composite_surface([h0, h1], reorient=False)
         self._halve(nurbs)

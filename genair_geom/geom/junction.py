@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import brute, fmin
 
-from part           import Part
+from .part import Part
 
 from nurbs.curve    import (ControlPolygon,
                             Curve,

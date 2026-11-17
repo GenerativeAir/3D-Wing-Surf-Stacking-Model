@@ -7,12 +7,16 @@ from PIL import Image
 import numpy as np
 import pyglet
 
-import axes
-import camera
-import controller
-import mode
-import plot
-import pobject
+from . import axes
+from . import camera
+from . import controller
+from . import mode
+from . import pobject
+
+try:
+    from IPython import get_ipython
+except ImportError:  # IPython non installato: script non interattivi
+    get_ipython = lambda: None
 
 
 class Figure(pyglet.window.Window):
@@ -84,7 +88,7 @@ class Figure(pyglet.window.Window):
         self.NR = setup_gl()
         self.step = kwargs.get('step', 5.0)
 
-        self.fps_display = pyglet.clock.ClockDisplay()
+        self.fps_display = pyglet.window.FPSDisplay(self)
         self.mode_label = pyglet.text.Label(text='TranslatePointMode',
                                             font_size=36,
                                             bold=True,
@@ -106,10 +110,11 @@ class Figure(pyglet.window.Window):
         self.inject(*pos)
 
         self.IP = get_ipython()
-        self.IP.user_ns[self.name] = self
+        if self.IP is not None:
+            self.IP.user_ns[self.name] = self
 
         # XXX: on windows, this strategy works with 1 window at a time
-        if len(pyglet.app.windows) == 1:
+        if self.IP is not None and len(pyglet.app.windows) == 1:
             self.IP.enable_gui('pyglet2')
 
     @property
@@ -215,12 +220,12 @@ class Figure(pyglet.window.Window):
                    for pos in self.pos.values()
                    for po in pos]:
             po._postdraw(self)
-        if self.name in self.IP.user_ns:
+        if self.IP is not None and self.name in self.IP.user_ns:
             del self.IP.user_ns[self.name]
         self.close()
 
         # XXX: on windows, this strategy works with 1 window at a time
-        if not pyglet.app.windows:
+        if self.IP is not None and not pyglet.app.windows:
             self.IP.enable_gui()
             assert not self.IP.active_eventloop
 
