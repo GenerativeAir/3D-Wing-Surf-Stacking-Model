@@ -1,7 +1,7 @@
 import numpy as np
 
-import knot
-import point
+from . import knot
+from . import point
 
 
 class ControlObject(object):
@@ -37,7 +37,7 @@ class ControlObject(object):
             cpts = np.asarray(cpts)
             Pw = point.points_to_obj_mat(cpts)
         elif Pw is not None:
-            Pw = np.asfarray(Pw)
+            Pw = np.asarray(Pw)
             cpts = point.obj_mat_to_points(Pw)
         n = np.array(cpts.shape) - 1
         self._n = tuple(n)
@@ -50,7 +50,7 @@ class ControlObject(object):
     def __getstate__(self):
         ''' Pickling. '''
         d = self.__dict__.copy()
-        ds = d.viewkeys() - {'Pw', '_n'}
+        ds = d.keys() - {'Pw', '_n'}
         for k in ds:
             del d[k]
         return d
@@ -70,7 +70,7 @@ class ControlObject(object):
         ''' Return the xyz min/max bounds. '''
         m = self.Pw.reshape((-1, 4))
         m = obj_mat_to_3D(m)
-        return zip(np.min(m, axis=0), np.max(m, axis=0))
+        return list(zip(np.min(m, axis=0), np.max(m, axis=0)))
 
     def copy(self):
         ''' Self copy. '''
@@ -95,7 +95,7 @@ class NURBSObject(object):
     def __getstate__(self):
         ''' Pickling. '''
         d = self.__dict__.copy()
-        ds = d.viewkeys() - {'_cobj', '_p', '_U'}
+        ds = d.keys() - {'_cobj', '_p', '_U'}
         for k in ds:
             del d[k]
         return d
@@ -123,7 +123,7 @@ class NURBSObject(object):
     @U.setter
     def U(self, new_U):
         ''' Set the knot vector(s). '''
-        new_U = [np.asfarray(U).copy() for U in new_U]
+        new_U = [np.asarray(U).copy() for U in new_U]
         for n, p, U in zip(self.cobj.n, self.p, new_U):
             knot.clean_knot_vec(U)
             knot.check_knot_vec(n, p, U)
@@ -141,11 +141,11 @@ class NURBSObject(object):
 
     def isequivalent(self, n, TOL=1e-8):
         ''' Is self equivalent to another NURBSObject? '''
-        P = [obj_mat_to_3D(Pw) for Pw in self.cobj.Pw, n.cobj.Pw]
+        P = [obj_mat_to_3D(Pw) for Pw in (self.cobj.Pw, n.cobj.Pw)]
         if P[0].shape != P[1].shape:
             return False
         m = ()
-        for v in [P] + zip(self.U, n.U):
+        for v in [P] + list(zip(self.U, n.U)):
             m += np.allclose(*v, atol=TOL),
         return all(m)
 
@@ -165,7 +165,7 @@ class NURBSObject(object):
 def obj_mat_to_3D(Pw):
     ''' Convert a 4D (homogeneous) object matrix to a 3D object matrix,
     i.e. a (... x 4) to a (... x 3) matrix. '''
-    Pw = np.asfarray(Pw)
+    Pw = np.asarray(Pw)
     if Pw.shape[-1] == 3:
         return Pw
     w = Pw[...,-1]
@@ -175,7 +175,7 @@ def obj_mat_to_4D(P, w=None):
     ''' Idem obj_mat_to_3D, vice versa.  If w is None, all weights are
     set to unity, otherwise it is assumed that w has one less dimension
     than P. '''
-    P = np.asfarray(P); s = P.shape
+    P = np.asarray(P); s = P.shape
     if s[-1] == 4:
         return P
     Pw = np.ones(list(s[:-1]) + [4])

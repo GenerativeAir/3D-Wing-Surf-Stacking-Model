@@ -14,6 +14,9 @@ data/
 results/
 custom/
 
+# Cache del test set di predict_fast.py (già coperta da data/, resa esplicita)
+data/cache/
+
 # Model weights
 *.pth
 

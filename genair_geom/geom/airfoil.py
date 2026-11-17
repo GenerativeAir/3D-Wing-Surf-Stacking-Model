@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import brute, fmin
 
-from part           import Part
+from .part import Part
 
 from nurbs.fit      import (global_curve_approx_errbnd,
                             global_curve_approx_fixedn_fair,
@@ -99,7 +99,7 @@ class Airfoil(Part):
             return
         if self.intersection:
             return True
-        lo, up = [self.data[si][-1].xyz for si in 'lo', 'up']
+        lo, up = [self.data[si][-1].xyz for si in ('lo', 'up')]
         return (up == lo).all()
 
     @property
@@ -108,7 +108,7 @@ class Airfoil(Part):
         if not self.data['lo']:
             return
         zlo, zup = [np.array( [pt.xyz[-1] for pt in self.data[si]] )
-                    for si in 'lo', 'up']
+                    for si in ('lo', 'up')]
         return (zlo.size == zup.size) and (zlo == - zup).all()
 
     def _load(self, foil_path):

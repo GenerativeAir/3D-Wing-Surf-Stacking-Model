@@ -1,4 +1,4 @@
-import cPickle
+import pickle
 import gzip
 
 import numpy as np
@@ -15,7 +15,7 @@ from nurbs.surface import (Surface,
 from nurbs.util    import construct_flat_grid
 from nurbs.volume  import (Volume,
                            ControlVolume)
-from part          import _explode
+from .part import _explode
 
 
 __all__ = ['save', 'load',
@@ -41,7 +41,7 @@ def save(*os, **kwargs):
     fn = kwargs.get('fn', 'tmp.p')
     with gzip.open(fn, 'wb') as fh:
         for o in os:
-            cPickle.dump(o, fh, - 1)
+            pickle.dump(o, fh, - 1)
     return True
 
 def load(fn='tmp.p'):
@@ -62,7 +62,7 @@ def load(fn='tmp.p'):
         os = []
         while True:
             try:
-                o = cPickle.load(fh)
+                o = pickle.load(fh)
                 os.append(o)
             except EOFError:
                 break
@@ -137,7 +137,7 @@ def save_TECPLOT(*os, **kwargs):
     cobj = kwargs.get('cobj', False)
     ppu = kwargs.get('ppu', 50)
     to_write = _explode(*os)
-    with open(fn, 'w') as fh:
+    with open(fn, 'w', encoding='ascii', newline='\n') as fh:
         fh.write('TITLE = "' + fn + '"\n')
         fh.write('FILETYPE = GRID\n')
         fh.write('VARIABLES = "X" "Y" "Z"\n')
@@ -170,11 +170,11 @@ def save_TECPLOT(*os, **kwargs):
                 Q = Q.reshape((-1, 3))
             placeholders= ['{' + str(i) + '[0]} = {' + str(i) + '[1]}'
                            for i in range(nu)]
-            Imax = ','.join(placeholders).format(*zip('IJK'[:nu], nums))
+            Imax = ','.join(placeholders).format(*list(zip('IJK'[:nu], nums)))
             fh.write('ZONE\n')
             fh.write(Imax + ', DATAPACKING = POINT\n')
             for xyz in Q:
-                xyz.tofile(fh, ' '); fh.write('\n')
+                fh.write(' '.join(repr(float(v)) for v in xyz) + '\n')
     return True
 
 
@@ -210,9 +210,9 @@ def load_TECPLOT(fn='surfCPs.dat'):
             IJK = [int(i.split()[-1]) for i in IJK]
             I = np.prod(IJK)
             P = np.zeros(I*3)
-            for i in xrange(I*3):
+            for i in range(I*3):
                 P[i] = float(fh.readline())
-            for i in xrange(I*2):
+            for i in range(I*2):
                 fh.readline()
             newshape = np.append(3, IJK[::-1])
             P = P.reshape(newshape)

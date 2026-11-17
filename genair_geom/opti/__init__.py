@@ -1,2 +1,2 @@
-import axial
-import grid
+from . import axial
+from . import grid

@@ -29,13 +29,13 @@ three-dimensional space) i.e. C(u) = H{Cw(u)}.
 
 import numpy as np
 from scipy.integrate import quad
-from scipy.misc import comb
+from math import comb
 
-import basis
-import knot
-import nurbs
-import point
-import util
+from . import basis
+from . import knot
+from . import nurbs
+from . import point
+from . import util
 
 import plot.pobject
 
@@ -296,7 +296,7 @@ class Curve(nurbs.NURBSObject, plot.pobject.PlotCurve):
 
         n, p, U, Pw = self.var()
         if len(X) != 0:
-            if X == 'mid':
+            if isinstance(X, str) and X == 'mid':
                 X = knot.midpoints_knot_vec(U)
             X = knot.clean_knot(X)
             U, Pw = refine_knot_vect_curve(n, p, U, Pw, X)
@@ -315,7 +315,7 @@ class Curve(nurbs.NURBSObject, plot.pobject.PlotCurve):
         n, p, U, Pw = self.var()
         nb, U, Pw = decompose_curve(n, p, U, Pw)
         Cs = []
-        for b in xrange(nb):
+        for b in range(nb):
             c = Curve(ControlPolygon(Pw=Pw[b]), (p,), (U[b],))
             Cs.append(c)
         return Cs
@@ -496,9 +496,9 @@ def curve_deriv_cpts(n, p, U, P, d, r1, r2):
     r = r2 - r1
     PK = np.zeros((d + 1, r + 1, 3))
     PK[0,:r+1] = P[r1:r1+r+1]
-    for k in xrange(1, d + 1):
+    for k in range(1, d + 1):
         tmp = p - k + 1
-        for i in xrange(r - k + 1):
+        for i in range(r - k + 1):
             PK[k,i] = tmp * ((PK[k-1,i+1] - PK[k-1,i]) /
                              (U[r1+i+p+1] - U[r1+i+k]))
     return PK
@@ -520,8 +520,8 @@ def curve_derivs_alg1(n, p, U, P, u, d):
     du = min(d, p)
     span = basis.find_span(n, p, U, u)
     nders = basis.ders_basis_funs(span, u, p, du, U)
-    for k in xrange(du + 1):
-        for j in xrange(p + 1):
+    for k in range(du + 1):
+        for j in range(p + 1):
             CK[k] += nders[k,j] * P[span-p+j]
     return CK
 
@@ -540,8 +540,8 @@ def curve_derivs_alg2(n, p, U, P, u, d):
     span = basis.find_span(n, p, U, u)
     N = basis.all_basis_funs(span, u, p, U)
     PK = curve_deriv_cpts(n, p, U, P, du, span - p, span)
-    for k in xrange(du + 1):
-        for j in xrange(p - k + 1):
+    for k in range(du + 1):
+        for j in range(p - k + 1):
             CK[k] += N[j,p-k] * PK[k,j]
     return CK
 
@@ -558,7 +558,7 @@ def rat_curve_point(n, p, U, Pw, u):
     Cw = np.zeros(4)
     span = basis.find_span(n, p, U, u)
     N = basis.basis_funs(span, u, p, U)
-    for j in xrange(p + 1):
+    for j in range(p + 1):
         Cw += N[j] * Pw[span-p+j]
     return Cw[:3] / Cw[-1]
 
@@ -570,11 +570,11 @@ def rat_curve_point_v(n, p, U, Pw, u, num):
 
     '''
 
-    u = np.asfarray(u)
+    u = np.asarray(u)
     Cw = np.zeros((4, num))
     span = basis.find_span_v(n, p, U, u, num)
     N = basis.basis_funs_v(span, u, p, U, num)
-    for j in xrange(p + 1):
+    for j in range(p + 1):
         Cw += N[j] * Pw[span-p+j].T
     return Cw[:3] / Cw[-1]
 
@@ -592,9 +592,9 @@ def rat_curve_derivs(Aders, wders, d):
     '''
 
     CK = np.zeros((d + 1, 3))
-    for k in xrange(d + 1):
+    for k in range(d + 1):
         v = Aders[k]
-        for i in xrange(1, k + 1):
+        for i in range(1, k + 1):
             v -= comb(k, i) * wders[i] * CK[k - i]
         CK[k] = v / wders[0]
     return CK
@@ -649,9 +649,9 @@ def curve_knot_ins(n, p, UP, Pw, u, k, s, r):
     Qw[:k-p+1] = Pw[:k-p+1]
     Qw[k-s+r:n+r+1] = Pw[k-s:n+1]
     Rw[:p-s+1] = Pw[k-p:k-s+1]
-    for j in xrange(1, r + 1):
+    for j in range(1, r + 1):
         L = k - p + j
-        for i in xrange(p - j - s + 1):
+        for i in range(p - j - s + 1):
             alpha = (u - UP[L+i]) / (UP[i+k+1] - UP[L+i])
             Rw[i] = alpha * Rw[i+1] + (1.0 - alpha) * Rw[i]
         Qw[L] = Rw[0]
@@ -675,7 +675,7 @@ def inv_curve_knot_ins(n, p, U, Pw, i, Q):
 
     p0 = Pw[i-1]; p1 = Pw[i]
     d0, d1 = [util.distance(Q, pt[:3] / pt[-1])
-              for pt in p0, p1]
+              for pt in (p0, p1)]
     s = (p0[-1] * d0) / (p0[-1] * d0 + p1[-1] * d1)
     return U[i] + s * (U[i+p] - U[i])
 
@@ -719,7 +719,7 @@ def refine_knot_vect_curve(n, p, U, Pw, X):
 
     '''
 
-    X = np.asfarray(X)
+    X = np.asarray(X)
     r = X.size - 1
     if r < 0: return U, Pw
     a = basis.find_span(n, p, U, X[0])
@@ -732,13 +732,13 @@ def refine_knot_vect_curve(n, p, U, Pw, X):
     Ubar[:a+1] = U[:a+1]
     Ubar[b+p+r+1:m+r+2] = U[b+p:m+1]
     i, k = b + p - 1, b + p + r
-    for j in xrange(r, -1, -1):
+    for j in range(r, -1, -1):
         while X[j] <= U[i] and i > a:
             Qw[k-p-1] = Pw[i-p-1]
             Ubar[k] = U[i]
             k, i  = k - 1, i - 1
         Qw[k-p-1] = Qw[k-p]
-        for l in xrange(1, p + 1):
+        for l in range(1, p + 1):
             ind = k - p + l
             alfa = Ubar[k+l] - X[j]
             if abs(alfa) == 0.0:
@@ -774,20 +774,20 @@ def decompose_curve(n, p, U, Pw):
         Ub[nb] = np.hstack(((p + 1) * [U[a]], (p + 1) * [U[b]]))
         if mult < p:
             numer = U[b] - U[a]
-            for j in xrange(p, mult, -1):
+            for j in range(p, mult, -1):
                 alphas[j-mult-1] = numer / (U[a+j] - U[a])
             r = p - mult
-            for j in xrange(1, r + 1):
+            for j in range(1, r + 1):
                 save = r - j
                 s = mult + j
-                for k in xrange(p, s - 1, -1):
+                for k in range(p, s - 1, -1):
                     alpha = alphas[k-s]
                     Qw[nb,k] = alpha * Qw[nb,k] + (1.0 - alpha) * Qw[nb,k-1]
                 if b < m:
                     Qw[nb+1,save] = Qw[nb,p]
         nb += 1
         if b < m:
-            for i in xrange(p - mult, p + 1):
+            for i in range(p - mult, p + 1):
                 Qw[nb,i] = Pw[b-p+i]
             a = b; b += 1
     return nb, Ub, Qw
@@ -839,7 +839,7 @@ def remove_curve_knot(n, p, U, Pw, u, r, s, num, d=1e-3):
     U = U.copy(); Pw = Pw.copy()
     m = n + p + 1; o = p + 1; fout = (2 * r - s - p) // 2
     first = r - p; last = r - s; nr = 0
-    for t in xrange(num):
+    for t in range(num):
         off = first - 1
         tmp[0] = Pw[off]; tmp[last+1-off] = Pw[last+1]
         i = first; j = last; ii = 1; jj = last - off
@@ -870,12 +870,12 @@ def remove_curve_knot(n, p, U, Pw, u, r, s, num, d=1e-3):
         return nr, U, Pw
     U[r+1-nr:m+1-nr] = U[r+1:m+1]
     j = fout; i = j
-    for k in xrange(1, nr):
+    for k in range(1, nr):
         if (np.mod(k, 2) == 1):
             i += 1
         else:
             j -= 1
-    for k in xrange(i + 1, n + 1):
+    for k in range(i + 1, n + 1):
         Pw[j] = Pw[k]
         j += 1
     U = U[:-nr]; Qw = Pw[:-nr]
@@ -906,7 +906,7 @@ def remove_curve_knots(n, p, U, Pw, d=1e-3):
     bgap = r; agap = bgap + 1
     while True:
         nr = 0
-        for t in xrange(s):
+        for t in range(s):
             off = first - 1
             tmp[0] = Pw[off]; tmp[last+1-off] = Pw[last+1]
             i = first; j = last
@@ -936,12 +936,12 @@ def remove_curve_knots(n, p, U, Pw, d=1e-3):
             first -= 1; last += 1
         if nr > 0:
             j = fout; i = j
-            for k in xrange(1, nr):
+            for k in range(1, nr):
                 if (np.mod(k, 2) == 1):
                     i += 1
                 else:
                     j -= 1
-            for k in xrange(i + 1, bgap + 1):
+            for k in range(i + 1, bgap + 1):
                 Pw[j] = Pw[k]
                 j += 1
         else:
@@ -957,7 +957,7 @@ def remove_curve_knots(n, p, U, Pw, d=1e-3):
                 i += 1; k += 1
             s = i - k1; r = i - 1
             gap += nr
-            for k in xrange(s):
+            for k in range(s):
                 Pw[j] = Pw[agap]
                 j, agap = j + 1, agap + 1
             bgap = j - 1
@@ -966,7 +966,7 @@ def remove_curve_knots(n, p, U, Pw, d=1e-3):
     if gap == 0:
         return gap, U, Pw
     i = hispan + 1; k = i - gap
-    for j in xrange(1, o + 1):
+    for j in range(1, o + 1):
         U[k] = U[i]
         k += 1; i += 1
     U = U[:-gap]; Qw = Pw[:-gap]
@@ -1038,25 +1038,25 @@ def degree_elevate_curve(n, p, U, Pw, t):
         rbz = ph - (r + 1) // 2 if r > 0 else ph
         if r > 0:
             numer = ub - ua
-            for k in xrange(p, mul, -1):
+            for k in range(p, mul, -1):
                 alfs[k-mul-1] = numer / (U[a+k] - ua)
-            for j in xrange(1, r + 1):
+            for j in range(1, r + 1):
                 save = r - j
                 s = mul + j
-                for k in xrange(p, s - 1, -1):
+                for k in range(p, s - 1, -1):
                     bpts[k] = (alfs[k-s] * bpts[k] +
                                (1.0 - alfs[k-s]) * bpts[k-1])
                 Nextbpts[save] = bpts[p]
-        for i in xrange(lbz, ph + 1):
+        for i in range(lbz, ph + 1):
             ebpts[i] = 0.0
             mpi = min(p, i)
-            for j in xrange(max(0, i - t), mpi + 1):
+            for j in range(max(0, i - t), mpi + 1):
                 ebpts[i] += bezalfs[i,j] * bpts[j]
         if oldr > 1:
             first = kind - 2; last = kind
             den = ub - ua
             bet = (ub - Uh[kind-1]) / den
-            for tr in xrange(1, oldr):
+            for tr in range(1, oldr):
                 i = first; j = last
                 kj = j - kind + 1
                 while j - i > tr:
@@ -1074,10 +1074,10 @@ def degree_elevate_curve(n, p, U, Pw, t):
                     i += 1; j -= 1; kj -= 1
                 first -= 1; last += 1
         if a != p:
-            for i in xrange(ph - oldr):
+            for i in range(ph - oldr):
                 Uh[kind] = ua
                 kind += 1
-        for j in xrange(lbz, rbz + 1):
+        for j in range(lbz, rbz + 1):
             Qw[cind] = ebpts[j]
             cind += 1
         if b < m:
@@ -1124,20 +1124,20 @@ def bez_degree_reduce(bpts, rbpts, MaxErr):
     odd = np.mod(p, 2)
     rbpts[0] = bpts[0]
     if not odd:
-        for i in xrange(1, r + 1):
+        for i in range(1, r + 1):
             alf = float(i) / p
             rbpts[i] = (bpts[i] - alf * rbpts[i-1]) / (1.0 - alf)
         rbpts[p-1] = bpts[p]
-        for i in xrange(p - 2, r, -1):
+        for i in range(p - 2, r, -1):
             alf = float(i + 1) / p
             rbpts[i] = (bpts[i+1] - (1.0 - alf) * rbpts[i+1]) / alf
         MaxErr[:] = util.distance(bpts[r+1], (rbpts[r] + rbpts[r+1]) / 2)
     else:
-        for i in xrange(1, r):
+        for i in range(1, r):
             alf = float(i) / p
             rbpts[i] = (bpts[i] - alf * rbpts[i-1]) / (1.0 - alf)
         rbpts[p-1] = bpts[p]
-        for i in xrange(p - 2, r, -1):
+        for i in range(p - 2, r, -1):
             alf = float(i + 1) / p
             rbpts[i] = (bpts[i+1] - (1.0 - alf) * rbpts[i+1]) / alf
         alfl, alfr = float(r) / p, float(r + 1) / p
@@ -1182,11 +1182,11 @@ def degree_reduce_curve(n, p, U, Pw, d=1e-3):
         lbz = (oldr + 2) // 2 if oldr > 0 else 1
         if r > 0:
             numer = U[b] - U[a]
-            for k in xrange(p, mult - 1, -1):
+            for k in range(p, mult - 1, -1):
                 alphas[k-mult-1] = numer / (U[a+k] - U[a])
-            for j in xrange(1, r + 1):
+            for j in range(1, r + 1):
                 save = r - j; s = mult + j
-                for k in xrange(p, s - 1, -1):
+                for k in range(p, s - 1, -1):
                     bpts[k] = (alphas[k-s] * bpts[k] +
                                (1.0 - alphas[k-s]) * bpts[k-1])
                 Nextbpts[save] = bpts[p]
@@ -1196,7 +1196,7 @@ def degree_reduce_curve(n, p, U, Pw, d=1e-3):
             raise MaximumToleranceReached(e, TOL)
         if oldr > 0:
             first, last = kind, kind
-            for k in xrange(oldr):
+            for k in range(oldr):
                 i, j = first, last; kj = j - kind
                 while j - i > k:
                     alfa = (U[a] - Uh[i-1]) / (U[b] - Uh[i-1])
@@ -1212,17 +1212,17 @@ def degree_reduce_curve(n, p, U, Pw, d=1e-3):
                     Br = util.distance(Qw[i-1], A)
                 K = a + oldr - k; q = (2 * p - k + 1) // 2
                 L = k - q
-                for ii in xrange(L, a + 1):
+                for ii in range(L, a + 1):
                     e[ii] += Br
                     if e[ii] > TOL:
                         raise MaximumToleranceReached(e, TOL)
                 first, last = first - 1, last + 1
             cind = i - 1
         if a != p:
-            for i in xrange(ph - oldr):
+            for i in range(ph - oldr):
                 Uh[kind] = U[a]
                 kind += 1
-        for i in xrange(lbz, ph + 1):
+        for i in range(lbz, ph + 1):
             Qw[cind] = rbpts[i]
             cind += 1
         if b < m:
@@ -1258,7 +1258,7 @@ def curve_point_projection(n, p, U, Pw, Pi, ui=None, eps1=1e-15, eps2=1e-12):
         ui = us[i]
     P, w = Pw[:,:-1], Pw[:,-1]
     rat = (w != 1.0).any()
-    for ni in xrange(20): # knob
+    for ni in range(20): # knob
         CK = curve_derivs_alg1(n, p, U, P, ui, 2)
         if rat:
             wders = curve_derivs_alg1(n, p, U, w, ui, 2)
@@ -1295,7 +1295,7 @@ def reverse_curve_direction(n, p, U, Pw):
     m = n + p + 1
     a = U[0]; b = U[-1]
     S = U.copy()
-    for i in xrange(1, m - 2 * p):
+    for i in range(1, m - 2 * p):
         S[m-p-i] = - U[p+i] + a + b
     Qw = Pw[::-1]
     return S, Qw
@@ -1337,7 +1337,7 @@ def arc_length_to_param(C, a):
         return util.norm(d1)
 
     U, = C.U; ui = U[0]
-    for ni in xrange(20):
+    for ni in range(20):
         Laui = La(ui)
         if abs(Laui) <= 1e-8:
             return ui
@@ -1381,7 +1381,7 @@ def reparam_func_curve(C, f):
                Cd[3] * fd[0][0]**4
 
 
-    if any([c.isrational for c in C, f]):
+    if any([c.isrational for c in (C, f)]):
         raise nurbs.RationalNURBSObjectDetected()
 
     dummy, p, U, dummy = C.var()
@@ -1398,7 +1398,7 @@ def reparam_func_curve(C, f):
     n, p, Ur, Pw = Cr.var()
     nb, Us, Pws = decompose_curve(n, p, Ur, Pw)
     Cs = []
-    for b in xrange(nb):
+    for b in range(nb):
         c = Curve(ControlPolygon(Pw=Pws[b]), (p,), (Us[b],))
         Cs.append(c)
 
@@ -1415,18 +1415,18 @@ def reparam_func_curve(C, f):
         Cr = make_composite_curve(Cs, remove=False)
         Cr.U = Sp,
     else:
-        for b in xrange(nb):
+        for b in range(nb):
             c, u, Pw = Cs[b], Us[b], Pws[b]
             Cdl = [c.eval_derivatives(u[0], i)[i]
-                   for i in xrange(1, ml + 1)]
+                   for i in range(1, ml + 1)]
             Cdr = [c.eval_derivatives(u[-1], i)[i]
-                   for i in xrange(1, mr + 1)]
+                   for i in range(1, mr + 1)]
             fdl = [f.eval_derivatives(Spu[b], i)[i]
-                   for i in xrange(1, ml + 1)]
+                   for i in range(1, ml + 1)]
             fdr = [f.eval_derivatives(Spu[b+1], i)[i]
-                   for i in xrange(1, mr + 1)]
+                   for i in range(1, mr + 1)]
             ds = Spu[b+1] - Spu[b]
-            for i in xrange(ml + 1):
+            for i in range(ml + 1):
                 if i == 0:
                     Ql = Pw[0,:-1]
                     continue
@@ -1443,7 +1443,7 @@ def reparam_func_curve(C, f):
                     Qn = ds**4 / pq / (pq - 1) / (pq - 2) / (pq - 3) * C4(Cdl, fdl) \
                          - Ql[0] + 4 * Ql[1] - 6 * Ql[2] + 4 * Ql[3]
                 Ql = np.vstack((Ql, Qn))
-            for i in xrange(mr + 1):
+            for i in range(mr + 1):
                 if i == 0:
                     Qr = Pw[-1,:-1]
                     continue
@@ -1529,9 +1529,9 @@ def mult_func_curve(G, f):
     h[0,:3], h[0,-1] = f[0] * gw[0,:3], gw[0,-1]
 
     # initialize first Bezier segments
-    for i in xrange(p + 1):
+    for i in range(p + 1):
         fb[i] = f[i]
-    for j in xrange(q + 1):
+    for j in range(q + 1):
         gb[j] = gw[j]
 
     # precompute Bezier product matrix
@@ -1569,22 +1569,22 @@ def mult_func_curve(G, f):
         rbz = p + q - (t + 1) // 2 if t > 0 else p + q
         if rr > 0:
             num = R[br] - R[ar]
-            for k in xrange(p, mlr, -1):
+            for k in range(p, mlr, -1):
                 alf[k-mlr-1] = num / (R[ar+k] - R[ar])
-            for j in xrange(1, rr + 1):
+            for j in range(1, rr + 1):
                 save = rr - j
                 s = mlr + j
-                for k in xrange(p, s - 1, -1):
+                for k in range(p, s - 1, -1):
                     fb[k] = alf[k-s] * fb[k] + (1.0 - alf[k-s]) * fb[k-1]
                 nextfb[save] = fb[p]
         if rs > 0:
             num = S[bs] - S[as2]
-            for k in xrange(q, mls, -1):
+            for k in range(q, mls, -1):
                 bet[k-mls-1] = num / (S[as2+k] - S[as2])
-            for j in xrange(1, rs + 1):
+            for j in range(1, rs + 1):
                 save = rs - j
                 s = mls + j
-                for k in xrange(q, s - 1, -1):
+                for k in range(q, s - 1, -1):
                     gb[k] = bet[k-s] * gb[k] + (1.0 - bet[k-s]) * gb[k-1]
                 nextgb[save] = gb[q]
 
@@ -1596,7 +1596,7 @@ def mult_func_curve(G, f):
             first, last = mt - 2, mt
             den = S[bs] - S[as2]
             beta = (S[bs] - T[mt-1]) / den
-            for k in xrange(1, rem):
+            for k in range(1, rem):
                 i = first; j = last; l = j - mt + 1
                 while j - i > k:
                     if i < nh:
@@ -1620,13 +1620,13 @@ def mult_func_curve(G, f):
 
         # prepare for next pass through
         if br < mr and bs < ms:
-            for i in xrange(rr):
+            for i in range(rr):
                 fb[i] = nextfb[i]
-            for i in xrange(rr, p + 1):
+            for i in range(rr, p + 1):
                 fb[i] = f[br-p+i]
-            for j in xrange(rs):
+            for j in range(rs):
                 gb[j] = nextgb[j]
-            for j in xrange(rs, q + 1):
+            for j in range(rs, q + 1):
                 gb[j] = gw[bs-q+j]
             ar = br; br += 1; as2 = bs; bs += 1
             rem = p + q - mi
@@ -1783,8 +1783,8 @@ def reorient_curves(Cs):
             er[k] = cr.cobj.cpts[i].xyz
         if np.allclose(el[1], er[0]):
             return 1, 0
-        for l in xrange(2):
-            for r in xrange(2):
+        for l in range(2):
+            for r in range(2):
                 l2n = util.norm(el[l] - er[r])
                 if l2n < 1e-3:
                     return l, r
@@ -1792,7 +1792,7 @@ def reorient_curves(Cs):
 
     el, er = np.zeros((2, 3)), np.zeros((2, 3))
     Cs = [c.copy() for c in Cs]
-    for k in xrange(len(Cs) - 1):
+    for k in range(len(Cs) - 1):
         l, r = find_common_ends(Cs[k], Cs[k+1])
         if k == 0 and l == 0:
             Cs[0] = Cs[0].reverse()
@@ -1834,14 +1834,14 @@ def product_matrix(p, q):
     bezalfs = np.zeros((p + q + 1, p + 1))
     ph = p + q; ph2 = ph // 2
     bezalfs[0,0] = bezalfs[ph,p] = 1.0
-    for i in xrange(1, ph2 + 1):
+    for i in range(1, ph2 + 1):
         inv = 1.0 / comb(ph, i)
         mpi = min(p, i)
-        for j in xrange(max(0, i - q), mpi + 1):
+        for j in range(max(0, i - q), mpi + 1):
             bezalfs[i,j] = inv * comb(p, j) * comb(q, i - j)
-    for i in xrange(ph2 + 1, ph):
+    for i in range(ph2 + 1, ph):
         mpi = min(p, i)
-        for j in xrange(max(0, i - q), mpi + 1):
+        for j in range(max(0, i - q), mpi + 1):
             bezalfs[i,j] = bezalfs[ph-i,p-j]
     return bezalfs
 
@@ -1898,8 +1898,8 @@ def bezier_product(fb, p, gb, q, M, first, last):
     '''
 
     hkb = np.zeros((p + q + 1, 4))
-    for k in xrange(first, last + 1):
-        for l in xrange(max(0, k - q), min(p, k) + 1):
+    for k in range(first, last + 1):
+        for l in range(max(0, k - q), min(p, k) + 1):
             hkb[k,:3] += M[k,l] * fb[l] * gb[k-l,:3]
             hkb[k,-1] += M[k,l] * gb[k-l,-1]
     return hkb

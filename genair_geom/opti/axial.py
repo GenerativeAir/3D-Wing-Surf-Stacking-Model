@@ -89,7 +89,7 @@ class Axial(Curve):
 
     def __getstate__(self):
         d = self.__dict__.copy()
-        ds = d.viewkeys() - \
+        ds = d.keys() - \
                 {'_cobj', '_p', '_U', 'ffd', 'vb', 'A0', 'F0'}
         for k in ds:
             del d[k]
@@ -99,8 +99,8 @@ class Axial(Curve):
         f, s = (0, 1) if not last else (-1, -2)
         P = self.ffd.cobj.Pw[...,:3]
         n, dummy, l = self.ffd.cobj.n
-        for i in xrange(n + 1):
-            for k in xrange(l + 1):
+        for i in range(n + 1):
+            for k in range(l + 1):
                 L0, L = P[i,f,k], P[i,s,k] - P[i,f,k]
                 P[i,f,k] = intersect_line_plane(L0, L, (0,0,0), (0,1,0))
                 P[i,f,k,1] = 0.0
@@ -115,7 +115,7 @@ class Axial(Curve):
         Pw = ffd.cobj.Pw
         Pw[:] = A1.F0
 
-        for j in xrange(vb.size):
+        for j in range(vb.size):
             v = vb[j]
 
             O0, Y0 = A0.eval_derivatives(v, 1); Y0[0] = 0
@@ -192,7 +192,7 @@ class Joint(Point):
 
     def __getstate__(self):
         d = self.__dict__.copy()
-        ds = d.viewkeys() - {'_xyzw', 'attachment'}
+        ds = d.keys() - {'_xyzw', 'attachment'}
         for k in ds:
             del d[k]
         return d
@@ -380,7 +380,7 @@ def make_axial_from_wing(wing, loc, n, p, nFFD, pFFD,
     if vb is None:
         vb = np.linspace(0, 1, nY)
     V = averaging_knot_vec(nY - 1, pY, vb)
-    for j in xrange(nY):
+    for j in range(nY):
         v = vb[j]
         if af1:
             Qw[:,j,:] = (1.0 - v) * sec0.cobj.Pw + \
@@ -399,7 +399,7 @@ def make_axial_from_wing(wing, loc, n, p, nFFD, pFFD,
     # Step 4
     A = refit_curve(eval('wi.' + loc), n, p)
     vb = np.zeros(nY)
-    for j in xrange(1, nY - 1):
+    for j in range(1, nY - 1):
         O = Qw[0,j,0,:3]
         Y = get_local_sys_xsec(Qw[:,j,:])[1]
         args = (A, O, Y)
@@ -491,11 +491,11 @@ def write_axial_connectivity(con_file='axial.con',
         FRMT0 = '{:5}{:8}\n'
         FRMT1 = '{:20}{:18}\n'
 
-        for i in xrange(naxl):
+        for i in range(naxl):
             axl = AXIALS[i]
             nxsec = axl.vb.size
             fh.write(FRMT0.format(i + 1, nxsec))
-            for j in xrange(nxsec):
+            for j in range(nxsec):
                 fh.write(FRMT1.format(7, axl.vb[j]))
 
         fh.write('\nnumber of points\n') # Joints are Points in Jtstrm
@@ -506,7 +506,7 @@ def write_axial_connectivity(con_file='axial.con',
         FRMT0 = '{:5}{:7}{:7}{:7}{:8}\n'
         FRMT1 = '{:26}{:27}\n'
 
-        for i in xrange(njnt):
+        for i in range(njnt):
             jnt = JOINTS[i]
             axl, idx = get_axial_joint_indices(jnt, 1)
             fh.write(FRMT0.format(i + 1, jnt.type, 7, axl + 1, idx + 1))
@@ -594,7 +594,7 @@ def get_local_sys_proj(v, T, Bv):
     O, Y = T.eval_derivatives(v, 1); Y[0] = 0.0
     Z = Bv.eval_point(v)
     X = np.cross(Y, Z)
-    X, Y, Z = [normalize(V) for V in X, Y, Z]
+    X, Y, Z = [normalize(V) for V in (X, Y, Z)]
     return O, X, Y, Z
 
 
@@ -604,7 +604,7 @@ def get_local_sys_xsec(Q):
     X = Q[-1, 0] - O
     Z = Q[ 0,-1] - O
     Y = np.cross(Z, X)
-    return [normalize(v) for v in X, Y, Z]
+    return [normalize(v) for v in (X, Y, Z)]
 
 
 def isec_plane_curve(u, C, S, T):
@@ -625,7 +625,7 @@ def write_bspline_curves(crvs, bspline_file):
     ncrv = len(crvs)
     jmax = np.zeros(ncrv, dtype='i', order='F')
     degree = np.zeros(ncrv, dtype='i', order='F')
-    for i in xrange(ncrv):
+    for i in range(ncrv):
         jmax[i] = np.array(crvs[i].cobj.cpts.shape)
         degree[i] = np.array(crvs[i].p)
     try:
@@ -645,7 +645,7 @@ def write_bspline_volumes(vols, bspline_file):
     nvol = len(vols)
     jkmmax = np.zeros((3, nvol), dtype='i', order='F')
     degree = np.zeros((3, nvol), dtype='i', order='F')
-    for i in xrange(nvol):
+    for i in range(nvol):
         jkmmax[:,i] = np.array(vols[i].cobj.cpts.shape)
         degree[:,i] = np.array(vols[i].p)
     try:

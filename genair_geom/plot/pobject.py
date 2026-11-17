@@ -73,7 +73,7 @@ class PlotPoint(PlotObject):
                 c = (COLORMAP['vols'] if isinstance(self.nurbs, PlotVolume)
                                       else COLORMAP['cpts'])
         else:
-            rc = np.random.random_integers(0, 255, 3)
+            rc = np.random.randint(0, 255, 3)
             c = np.append(rc, 255)
         if fill_batch:
             self.color = c
@@ -183,7 +183,7 @@ class PlotCurve(PlotNURBS):
             self._set_cpoint_color()
             self._fill_batch()
         else:
-            rc = np.random.random_integers(0, 255, 3)
+            rc = np.random.randint(0, 255, 3)
             c = np.append(rc, 255)
         self.color = c
         return c
@@ -191,7 +191,7 @@ class PlotCurve(PlotNURBS):
     def _fill_batch_lines(self):
         n, = self.cobj.n
         Pw = self.cobj.Pw
-        for i in xrange(n):
+        for i in range(n):
             cpt1, cpt2 = Pw[i], Pw[i+1]
             self._batch.add(2, pyglet.gl.GL_LINES, None,
                             ('v4d', np.hstack((cpt1, cpt2))),
@@ -229,7 +229,7 @@ class PlotSurface(PlotNURBS):
             self._set_cpoint_color()
             self._fill_batch()
         else:
-            rc = np.random.random_integers(0, 255, 3)
+            rc = np.random.randint(0, 255, 3)
             c = np.append(rc, 255)
         self.color = c
         return c
@@ -237,14 +237,14 @@ class PlotSurface(PlotNURBS):
     def _fill_batch_lines(self):
         n, m = self.cobj.n
         Pw = self.cobj.Pw
-        for i in xrange(n + 1):
-            for j in xrange(m):
+        for i in range(n + 1):
+            for j in range(m):
                 cpt1, cpt2 = Pw[i,j], Pw[i,j+1]
                 self._batch.add(2, pyglet.gl.GL_LINES, None,
                                 ('v4d', np.hstack((cpt1, cpt2))),
                                 ('c4B', COLORMAP['cobj'] * 2))
-        for j in xrange(m + 1):
-            for i in xrange(n):
+        for j in range(m + 1):
+            for i in range(n):
                 cpt1, cpt2 = Pw[i,j], Pw[i+1,j]
                 self._batch.add(2, pyglet.gl.GL_LINES, None,
                                 ('v4d', np.hstack((cpt1, cpt2))),
@@ -310,7 +310,7 @@ class PlotVolume(PlotNURBS):
         if reset:
             c = COLORMAP['vols']
         else:
-            rc = np.random.random_integers(0, 255, 3)
+            rc = np.random.randint(0, 255, 3)
             c = np.append(rc, 255)
         self.color = c
         return c
@@ -322,23 +322,23 @@ class PlotVolume(PlotNURBS):
     def _fill_batch_lines(self):
         n, m, l = self.cobj.n
         Pw = self.cobj.Pw
-        for i in xrange(n + 1):
-            for j in xrange(m + 1):
-                for k in xrange(l):
+        for i in range(n + 1):
+            for j in range(m + 1):
+                for k in range(l):
                     cpt1, cpt2 = Pw[i,j,k], Pw[i,j,k+1]
                     self._batch.add(2, pyglet.gl.GL_LINES, None,
                                     ('v4d', np.hstack((cpt1, cpt2))),
                                     ('c4B', COLORMAP['cobj'] * 2))
-        for j in xrange(m + 1):
-            for k in xrange(l + 1):
-                for i in xrange(n):
+        for j in range(m + 1):
+            for k in range(l + 1):
+                for i in range(n):
                     cpt1, cpt2 = Pw[i,j,k], Pw[i+1,j,k]
                     self._batch.add(2, pyglet.gl.GL_LINES, None,
                                     ('v4d', np.hstack((cpt1, cpt2))),
                                     ('c4B', COLORMAP['cobj'] * 2))
-        for k in xrange(l + 1):
-            for i in xrange(n + 1):
-                for j in xrange(m):
+        for k in range(l + 1):
+            for i in range(n + 1):
+                for j in range(m):
                     cpt1, cpt2 = Pw[i,j,k], Pw[i,j+1,k]
                     self._batch.add(2, pyglet.gl.GL_LINES, None,
                                     ('v4d', np.hstack((cpt1, cpt2))),

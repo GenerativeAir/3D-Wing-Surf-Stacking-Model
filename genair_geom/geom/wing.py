@@ -1,11 +1,11 @@
 import numpy as np
 
-from airfoil         import UnfitAirfoil
-from junction        import (TrimmedJunction,
+from .airfoil import UnfitAirfoil
+from .junction import (TrimmedJunction,
                              WatertightJunction)
-from misc            import WingStructure
-from part            import Part
-from wingtip         import Wingtip
+from .misc import WingStructure
+from .part import Part
+from .wingtip import Wingtip
 
 from nurbs.fit       import (global_curve_approx_fixedn,
                              local_curve_interp)
@@ -118,7 +118,7 @@ class Wing(Part):
             raise UnorientedWing()
         O = self.T.eval_point(0)
         dihedral -= self.dihedral
-        for e in self, self.Bv:
+        for e in (self, self.Bv):
             e.rotate(dihedral, (1,0,0), O)
 
     @property
@@ -149,7 +149,7 @@ class Wing(Part):
         ''' Size the Wing, e.g. determine its root and tip chords. '''
         h = self.halves[0]
         LE, TE = h.extract(0, 0), h.extract(1.0, 0)
-        es = [(LE.eval_point(u), TE.eval_point(u)) for u in 0, 1]
+        es = [(LE.eval_point(u), TE.eval_point(u)) for u in (0, 1)]
         self.chords[0] = distance(es[0][0], es[0][1])
         self.chords[1] = distance(es[1][0], es[1][1])
         self.LE, self.TE = LE, TE
@@ -161,7 +161,7 @@ class Wing(Part):
         hs = nurbs.split(0.5, 0)
         h0, h1 = hs
         h0 = h0.reverse(0)
-        for h in h0, h1:
+        for h in (h0, h1):
             U = h.U[0]; normalize_knot_vec(U)
         self.nurbs = nurbs
         self.halves = [h0, h1]
@@ -303,7 +303,7 @@ class Wing(Part):
         for h in self.halves:
             P = h.cobj.Pw[...,:3]
             n, dummy = h.cobj.n
-            for i in xrange(n + 1):
+            for i in range(n + 1):
                 L0, L = P[i,f], P[i,s] - P[i,f]
                 P[i,f] = intersect_line_plane(L0, L, (0,0,0), (0,1,0))
                 P[i,f,1] = 0.0
@@ -967,7 +967,7 @@ class BSplineFunctionCreator3(BSplineFunctionCreator):
 
         '''
 
-        self.ws = [w.copy() for w in w0, w1]
+        self.ws = [w.copy() for w in (w0, w1)]
         self.Ts = [None, None]
 
     def design(self):
@@ -1065,7 +1065,7 @@ def get_sweep_local_sys_proj(v, T, Bv):
     O, Y = T.eval_derivatives(v, 1); Y[0] = 0.0
     Z = Bv.eval_point(v)
     X = np.cross(Y, Z)
-    X, Y, Z = [normalize(V) for V in X, Y, Z]
+    X, Y, Z = [normalize(V) for V in (X, Y, Z)]
     return O, X, Y, Z
 
 

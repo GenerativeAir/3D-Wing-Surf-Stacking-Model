@@ -1,4 +1,4 @@
-from part import Part
+from .part import Part
 
 
 __all__ = ['Aircraft']

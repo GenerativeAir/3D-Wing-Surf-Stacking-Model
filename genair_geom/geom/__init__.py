@@ -1,10 +1,10 @@
-import aircraft
-import airfoil
-import filler
-import fuselage
-import io
-import junction
-import misc
-import part
-import wing
-import wingtip
+from . import aircraft
+from . import airfoil
+from . import filler
+from . import fuselage
+from . import io
+from . import junction
+from . import misc
+from . import part
+from . import wing
+from . import wingtip

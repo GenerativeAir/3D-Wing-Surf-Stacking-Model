@@ -1,13 +1,13 @@
 import numpy as np
-from scipy.misc import comb
+from math import comb
 
-import basis
-import curve
-import knot
-import nurbs
-import surface
-import transform
-import util
+from . import basis
+from . import curve
+from . import knot
+from . import nurbs
+from . import surface
+from . import transform
+from . import util
 
 import plot.pobject
 
@@ -322,8 +322,8 @@ class Volume(nurbs.NURBSObject, plot.pobject.PlotVolume):
             return None
         Vext, dummy = Vs
         Pw, cpts = Vext.cobj.Pw, Vext.cobj.cpts
-        for sep in xrange(l + 1):
-            for col in xrange(m + 1):
+        for sep in range(l + 1):
+            for col in range(m + 1):
                 Q, N = [cpt.xyz for cpt in cpts[:2,col,sep]]
                 transform.mirror(Pw[:,col,sep], N - Q, Q)
         U = Vext.U[0]; U -= U[0]
@@ -349,7 +349,7 @@ class Volume(nurbs.NURBSObject, plot.pobject.PlotVolume):
 
         n, p, U, m, q, V, l, r, W, Pw = self.var()
         if len(X) != 0:
-            if X == 'mid':
+            if isinstance(X, str) and X == 'mid':
                 if di == 0:
                     X = knot.midpoints_knot_vec(U)
                 elif di == 1:
@@ -546,21 +546,21 @@ def volume_derivs_alg1(n, p, U, m, q, V, l, r, W, P, u, v, w, d):
     Nv = basis.ders_basis_funs(vspan, v, q, dv, V)
     wspan = basis.find_span(l, r, W, w)
     Nw = basis.ders_basis_funs(wspan, w, r, dw, W)
-    for a in xrange(du + 1):
+    for a in range(du + 1):
         ddb = min(d - a, dv)
-        for b in xrange(ddb + 1):
+        for b in range(ddb + 1):
             tmp2[:] = 0.0
-            for z in xrange(r + 1):
+            for z in range(r + 1):
                 tmp1[:] = 0.0
-                for y in xrange(q + 1):
-                    for x in xrange(p + 1):
+                for y in range(q + 1):
+                    for x in range(p + 1):
                         tmp1[y] += (Nu[a,x] *
                                      P[uspan-p+x,vspan-q+y,wspan-r+z])
-                for y in xrange(q + 1):
+                for y in range(q + 1):
                     tmp2[z] += Nv[b,y] * tmp1[y]
             ddc = min(d - a - b, dw)
-            for c in xrange(ddc + 1):
-                for z in xrange(r + 1):
+            for c in range(ddc + 1):
+                for z in range(r + 1):
                     VABC[a,b,c] += Nw[c,z] * tmp2[z]
     return VABC
 
@@ -581,21 +581,21 @@ def volume_derivs_alg1_v(n, p, U, m, q, V, l, r, W, P, u, v, w, d, num):
     Nv = basis.ders_basis_funs_v(vspan, v, q, dv, V, num)
     wspan = basis.find_span_v(l, r, W, w, num)
     Nw = basis.ders_basis_funs_v(wspan, w, r, dw, W, num)
-    for a in xrange(du + 1):
+    for a in range(du + 1):
         ddb = min(d - a, dv)
-        for b in xrange(ddb + 1):
+        for b in range(ddb + 1):
             tmp2[:] = 0.0
-            for z in xrange(r + 1):
+            for z in range(r + 1):
                 tmp1[:] = 0.0
-                for y in xrange(q + 1):
-                    for x in xrange(p + 1):
+                for y in range(q + 1):
+                    for x in range(p + 1):
                         tmp1[y] += (Nu[a,x] *
                                      P[uspan-p+x,vspan-q+y,wspan-r+z].T)
-                for y in xrange(q + 1):
+                for y in range(q + 1):
                     tmp2[z] += Nv[b,y] * tmp1[y]
             ddc = min(d - a - b, dw)
-            for c in xrange(ddc + 1):
-                for z in xrange(r + 1):
+            for c in range(ddc + 1):
+                for z in range(r + 1):
                     VABC[a,b,c] += Nw[c,z] * tmp2[z]
     return VABC
 
@@ -616,15 +616,15 @@ def rat_volume_point(n, p, U, m, q, V, l, r, W, Pw, u, v, w):
     Nv = basis.basis_funs(vspan, v, q, V)
     wspan = basis.find_span(l, r, W, w)
     Nw = basis.basis_funs(wspan, w, r, W)
-    for j in xrange(r + 1):
+    for j in range(r + 1):
         tmp1[:] = 0.0
-        for l in xrange(q + 1):
-            for k in xrange(p + 1):
+        for l in range(q + 1):
+            for k in range(p + 1):
                 tmp1[l] += (Nu[k] *
                              Pw[uspan-p+k,vspan-q+l,wspan-r+j])
-        for l in xrange(q + 1):
+        for l in range(q + 1):
             tmp2[j] += Nv[l] * tmp1[l]
-    for j in xrange(r + 1):
+    for j in range(r + 1):
         Sw += Nw[j] * tmp2[j]
     return Sw[:3] / Sw[-1]
 
@@ -635,7 +635,7 @@ def rat_volume_point_v(n, p, U, m, q, V, l, r, W, Pw, u, v, w, num):
 
     '''
 
-    u, v, w = [np.asfarray(u) for u in u, v, w]
+    u, v, w = [np.asarray(u) for u in (u, v, w)]
     Sw = np.zeros((4, num))
     tmp1 = np.zeros((q + 1, 4, num))
     tmp2 = np.zeros((r + 1, 4, num))
@@ -645,14 +645,14 @@ def rat_volume_point_v(n, p, U, m, q, V, l, r, W, Pw, u, v, w, num):
     Nv = basis.basis_funs_v(vspan, v, q, V, num)
     wspan = basis.find_span_v(l, r, W, w, num)
     Nw = basis.basis_funs_v(wspan, w, r, W, num)
-    for j in xrange(r + 1):
+    for j in range(r + 1):
         tmp1[:] = 0.0
-        for l in xrange(q + 1):
-            for k in xrange(p + 1):
+        for l in range(q + 1):
+            for k in range(p + 1):
                 tmp1[l] += Nu[k] * Pw[uspan-p+k,vspan-q+l,wspan-r+j].T
-        for l in xrange(q + 1):
+        for l in range(q + 1):
             tmp2[j] += Nv[l] * tmp1[l]
-    for j in xrange(r + 1):
+    for j in range(r + 1):
         Sw += Nw[j] * tmp2[j]
     return Sw[:3] / Sw[-1]
 
@@ -670,19 +670,19 @@ def rat_volume_derivs(Aders, wders, d):
     '''
 
     VABC = np.zeros((d + 1, d + 1, d + 1, 3))
-    for a in xrange(d + 1):
-        for b in xrange(d - a + 1):
-            for c in xrange(d - a - b + 1):
+    for a in range(d + 1):
+        for b in range(d - a + 1):
+            for c in range(d - a - b + 1):
                 v = Aders[a,b,c]
-                for s in xrange(1, c + 1):
+                for s in range(1, c + 1):
                     v -= comb(c,s) * wders[0,0,s] * VABC[a,b,c-s]
-                for j in xrange(1, b + 1):
-                    for s in xrange(c + 1):
+                for j in range(1, b + 1):
+                    for s in range(c + 1):
                         v -= (comb(b,j) * comb(c,s) *
                               wders[0,j,s] * VABC[a,b-j,c-s])
-                for i in xrange(1, a + 1):
-                    for j in xrange(b + 1):
-                        for s in xrange(c + 1):
+                for i in range(1, a + 1):
+                    for j in range(b + 1):
+                        for s in range(c + 1):
                             v -= (comb(a,i) * comb(b,j) * comb(c,s) *
                                   wders[i,j,s] * VABC[a-i,b-j,c-s])
                 VABC[a,b,c] = v / wders[0,0,0]
@@ -696,19 +696,19 @@ def rat_volume_derivs_v(Aders, wders, d, num):
     '''
 
     VABC = np.zeros((d + 1, d + 1, d + 1, 3, num))
-    for a in xrange(d + 1):
-        for b in xrange(d - a + 1):
-            for c in xrange(d - a - b + 1):
+    for a in range(d + 1):
+        for b in range(d - a + 1):
+            for c in range(d - a - b + 1):
                 v = Aders[a,b,c]
-                for s in xrange(1, c + 1):
+                for s in range(1, c + 1):
                     v -= comb(c,s) * wders[0,0,s] * VABC[a,b,c-s]
-                for j in xrange(1, b + 1):
-                    for s in xrange(c + 1):
+                for j in range(1, b + 1):
+                    for s in range(c + 1):
                         v -= (comb(b,j) * comb(c,s) *
                               wders[0,j,s] * VABC[a,b-j,c-s])
-                for i in xrange(1, a + 1):
-                    for j in xrange(b + 1):
-                        for s in xrange(c + 1):
+                for i in range(1, a + 1):
+                    for j in range(b + 1):
+                        for s in range(c + 1):
                             v -= (comb(a,i) * comb(b,j) * comb(c,s) *
                                   wders[i,j,s] * VABC[a-i,b-j,c-s])
                 VABC[a,b,c] = v / wders[0,0,0]
@@ -723,24 +723,24 @@ def volume_knot_ins(n, p, U, m, q, V, l, r, W, Pw, u, k, s, rr, di):
     if di == 0:
         VQ, WQ = V.copy(), W.copy()
         Qw = np.zeros((n + rr + 1, m + 1, l + 1, 4))
-        for sep in xrange(l + 1):
-            for col in xrange(m + 1):
+        for sep in range(l + 1):
+            for col in range(m + 1):
                 UQ, Qw[:,col,sep] = \
                         curve.curve_knot_ins(n, p, U, Pw[:,col,sep],
                                              u, k, s, rr)
     elif di == 1:
         UQ, WQ = U.copy(), W.copy()
         Qw = np.zeros((n + 1, m + rr + 1, l + 1, 4))
-        for sep in xrange(l + 1):
-            for row in xrange(n + 1):
+        for sep in range(l + 1):
+            for row in range(n + 1):
                 VQ, Qw[row,:,sep] = \
                         curve.curve_knot_ins(m, q, V, Pw[row,:,sep],
                                              u, k, s, rr)
     elif di == 2:
         UQ, VQ = U.copy(), V.copy()
         Qw = np.zeros((n + 1, m + 1, l + rr + 1, 4))
-        for col in xrange(m + 1):
-            for row in xrange(n + 1):
+        for col in range(m + 1):
+            for row in range(n + 1):
                 WQ, Qw[row,col,:] = \
                         curve.curve_knot_ins(l, r, W, Pw[row,col,:],
                                              u, k, s, rr)
@@ -753,22 +753,22 @@ def refine_knot_vect_volume(n, p, U, m, q, V, l, r, W, Pw, X, di):
     if di == 0:
         VQ, WQ = V.copy(), W.copy()
         Qw = np.zeros((n + rr + 2, m + 1, l + 1, 4))
-        for sep in xrange(l + 1):
-            for col in xrange(m + 1):
+        for sep in range(l + 1):
+            for col in range(m + 1):
                 UQ, Qw[:,col,sep] = \
                         curve.refine_knot_vect_curve(n, p, U, Pw[:,col,sep], X)
     elif di == 1:
         UQ, WQ = U.copy(), W.copy()
         Qw = np.zeros((n + 1, m + rr + 2, l + 1, 4))
-        for sep in xrange(l + 1):
-            for row in xrange(n + 1):
+        for sep in range(l + 1):
+            for row in range(n + 1):
                 VQ, Qw[row,:,sep] = \
                         curve.refine_knot_vect_curve(m, q, V, Pw[row,:,sep], X)
     elif di == 2:
         UQ, VQ = U.copy(), V.copy()
         Qw = np.zeros((n + 1, m + 1, l + rr + 2, 4))
-        for col in xrange(m + 1):
-            for row in xrange(n + 1):
+        for col in range(m + 1):
+            for row in range(n + 1):
                 WQ, Qw[row,col,:] = \
                         curve.refine_knot_vect_curve(l, r, W, Pw[row,col,:], X)
     return UQ, VQ, WQ, Qw
@@ -780,24 +780,24 @@ def degree_elevate_volume(n, p, U, m, q, V, l, r, W, Pw, t, di):
         VQ, WQ = V.copy(), W.copy()
         nh = curve.mult_degree_elevate(n, p, U, t)[0]
         Qw = np.zeros((nh + 1, m + 1, l + 1, 4))
-        for sep in xrange(l + 1):
-            for col in xrange(m + 1):
+        for sep in range(l + 1):
+            for col in range(m + 1):
                 UQ, Qw[:,col,sep] = \
                         curve.degree_elevate_curve(n, p, U, Pw[:,col,sep], t)
     elif di == 1:
         UQ, WQ = U.copy(), W.copy()
         mh = curve.mult_degree_elevate(m, q, V, t)[0]
         Qw = np.zeros((n + 1, mh + 1, l + 1, 4))
-        for sep in xrange(l + 1):
-            for row in xrange(n + 1):
+        for sep in range(l + 1):
+            for row in range(n + 1):
                 VQ, Qw[row,:,sep] = \
                         curve.degree_elevate_curve(m, q, V, Pw[row,:,sep], t)
     elif di == 2:
         UQ, VQ = U.copy(), V.copy()
         lh = curve.mult_degree_elevate(l, r, W, t)[0]
         Qw = np.zeros((n + 1, m + 1, lh + 1, 4))
-        for col in xrange(m + 1):
-            for row in xrange(n + 1):
+        for col in range(m + 1):
+            for row in range(n + 1):
                 WQ, Qw[row,col,:] = \
                         curve.degree_elevate_curve(l, r, W, Pw[row,col,:], t)
     return UQ, VQ, WQ, Qw
@@ -831,7 +831,7 @@ def volume_point_projection(n, p, U, m, q, V, l, r, W, Pw, Pi,
     rat = (w != 1.0).any()
     J = np.zeros((3, 3))
     K = np.zeros(3)
-    for ni in xrange(20): # knob
+    for ni in range(20): # knob
         VABC = volume_derivs_alg1(n, p, U, m, q, V, l, r, W, P, ui, vi, wi, 2)
         if rat:
             wders = volume_derivs_alg1(n, p, U, m, q, V, l, r, W, w,
@@ -884,22 +884,22 @@ def reverse_volume_direction(n, p, U, m, q, V, l, r, W, Pw, di):
     if di == 0:
         S, T = V.copy(), W.copy()
         Qw = np.zeros((n + 1, m + 1, l + 1, 4))
-        for sep in xrange(l + 1):
-            for col in xrange(m + 1):
+        for sep in range(l + 1):
+            for col in range(m + 1):
                 R, Qw[:,col,sep] = \
                         curve.reverse_curve_direction(n, p, U, Pw[:,col,sep])
     elif di == 1:
         R, T = U.copy(), W.copy()
         Qw = np.zeros((n + 1, m + 1, l + 1, 4))
-        for sep in xrange(l + 1):
-            for row in xrange(n + 1):
+        for sep in range(l + 1):
+            for row in range(n + 1):
                 S, Qw[row,:,sep] = \
                         curve.reverse_curve_direction(m, q, V, Pw[row,:,sep])
     elif di == 2:
         R, S = U.copy(), V.copy()
         Qw = np.zeros((n + 1, m + 1, l + 1, 4))
-        for col in xrange(m + 1):
-            for row in xrange(n + 1):
+        for col in range(m + 1):
+            for row in range(n + 1):
                 T, Qw[row,col,:] = \
                         curve.reverse_curve_direction(l, r, W, Pw[row,col,:])
     return R, S, T, Qw
@@ -1009,11 +1009,11 @@ def make_trilinear_interp_volume(Sk, Sl, Sm):
     LT3 = make_ruled_volume2(*Sm)
     PT = np.ones((2, 2, 2, 4))
     uk, vl, wm = (0, -1), (0, -1), (0, -1)
-    for m in xrange(2):
+    for m in range(2):
         sm, w = Sm[m], wm[m]
-        for l in xrange(2):
+        for l in range(2):
             sl, v = Sl[l], vl[l]
-            for k in xrange(2):
+            for k in range(2):
                 sk, u = Sk[k], uk[k]
                 Q1, Q2, Q3  = (sk.cobj.cpts[v,w].xyz,
                                sl.cobj.cpts[w,u].xyz,

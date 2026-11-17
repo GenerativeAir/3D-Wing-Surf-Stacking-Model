@@ -1,6 +1,6 @@
 import numpy as np
 
-from part            import Part
+from .part import Part
 
 from ffd.ffd         import FFDVolume
 
@@ -123,13 +123,13 @@ class Fuselage(Part):
 
         nose = make_ellipse(*args)
         body = make_linear_curve(P0, P1)
-        for c in nose, body:
+        for c in (nose, body):
             reparam_arc_length_curve(c)
 
         n = make_composite_curve([nose, body])
         n = refit_curve(n, nlcpt, num=50000)
         n2, = n.cobj.n
-        for i in xrange(n2 + 1):
+        for i in range(n2 + 1):
             Pw = n.cobj.Pw[i]
             if Pw[0] > 0 or Pw[2] < - R:
                 Pw[2] = - R
@@ -258,7 +258,7 @@ class CylindricalFFDVolume(FFDVolume):
     def __getstate__(self):
         ''' Pickling. '''
         d = self.__dict__.copy()
-        ds = d.viewkeys() - {'_cobj', '_p', '_U', 'nurbs'}
+        ds = d.keys() - {'_cobj', '_p', '_U', 'nurbs'}
         for k in ds:
             del d[k]
         return d
@@ -344,11 +344,11 @@ class FuselageMolder(CylindricalFFDVolume):
         super(FuselageMolder, self)._setup()
         n, dummy, l = self.cobj.n
         Ps = []
-        for k in xrange(l + 1):
+        for k in range(l + 1):
             Pw = self.cobj.Pw[:,:,k]
 
-            O = Pw[n/2, 0,:3]
-            R = Pw[n/2,-1].copy(); R[2] = O[2]
+            O = Pw[n//2, 0,:3]
+            R = Pw[n//2,-1].copy(); R[2] = O[2]
             L = R[:3] - O
             scale(R, 1.3, O, L) # knob
             R = Point(*R); Ps.append(R)
@@ -363,7 +363,7 @@ class FuselageMolder(CylindricalFFDVolume):
             scale(R, 1.3, O, L) # knob
             R = Point(*R); Ps.append(R)
             R._D = R.xyz[2] - O[2]
-            R._Pw = Pw[n/2:]
+            R._Pw = Pw[n//2:]
             R.line = O, [0,0,1]
             R.transform_ffd = transform_ffd1
 
@@ -373,7 +373,7 @@ class FuselageMolder(CylindricalFFDVolume):
             scale(R, 1.3, O, L) # knob
             R = Point(*R); Ps.append(R)
             R._D = R.xyz[2] - O[2]
-            R._Pw = Pw[:n/2]
+            R._Pw = Pw[:n//2]
             R.line = O, [0,0,1]
             R.transform_ffd = transform_ffd1
 
@@ -414,7 +414,7 @@ class FairingMolder(CylindricalFFDVolume):
 
         super(FairingMolder, self)._setup()
         Ps = []
-        for i in xrange(self.cobj.n[0] + 1):
+        for i in range(self.cobj.n[0] + 1):
             Pw = self.cobj.Pw[i,:,1]
 
             R = Pw[-1].copy()

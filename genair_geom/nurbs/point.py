@@ -27,12 +27,12 @@ class Point(plot.pobject.PlotPoint):
         '''
 
         super(Point, self).__init__()
-        self._xyzw = np.asfarray([x * w, y * w, z * w, w])
+        self._xyzw = np.asarray([x * w, y * w, z * w, w])
 
     def __getstate__(self):
         ''' Pickling. '''
         d = self.__dict__.copy()
-        ds = d.viewkeys() - {'_xyzw'}
+        ds = d.keys() - {'_xyzw'}
         for k in ds:
             del d[k]
         return d
@@ -47,7 +47,7 @@ class Point(plot.pobject.PlotPoint):
         ''' Get the xyzw coordinates.  The x, y and z coordinates are
         automatically divived by w. '''
         x, y, z, w = self._xyzw
-        return np.asfarray([x / w, y / w, z / w, w])
+        return np.asarray([x / w, y / w, z / w, w])
 
     @xyzw.setter
     def xyzw(self, new_xyzw):
@@ -59,7 +59,7 @@ class Point(plot.pobject.PlotPoint):
         if y is None: y = self.xyzw[1]
         if z is None: z = self.xyzw[2]
         if w is None: w = self.xyzw[3]
-        self._xyzw[:] = np.asfarray([x * w, y * w, z * w, w])
+        self._xyzw[:] = np.asarray([x * w, y * w, z * w, w])
         plot.pobject.update_figures([self])
 
     @property
@@ -75,7 +75,7 @@ class Point(plot.pobject.PlotPoint):
     @property
     def bounds(self):
         ''' Return the xyz coordinates, repeated. '''
-        return [2 * (self.xyz[i],) for i in xrange(3)]
+        return [2 * (self.xyz[i],) for i in range(3)]
 
     def copy(self):
         ''' Self copy. '''
@@ -96,7 +96,7 @@ def points_to_obj_mat(points):
 
 def obj_mat_to_points(Pw):
     ''' Idem points_to_obj_mat, vice versa. '''
-    s = np.asfarray(Pw).shape[:-1]
+    s = np.asarray(Pw).shape[:-1]
     points = np.empty(s, dtype='object')
     for i in np.ndindex(s):
         points[i] = Point()

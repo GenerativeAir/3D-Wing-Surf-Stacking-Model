@@ -11,17 +11,17 @@ def normalize(V):
 
 def distance(P1, P2):
     ''' Calculate the distance between two points. '''
-    return norm(np.asfarray(P2) - P1)
+    return norm(np.asarray(P2) - P1)
 
 def distance_v(P1, P2):
     ''' Idem distance, vectorized in P1. '''
-    P12 = np.asfarray(P2).reshape((3, 1)) - P1
+    P12 = np.asarray(P2).reshape((3, 1)) - P1
     return np.sqrt(np.sum(P12**2, axis=0))
 
 def intersect_3D_lines(P0, T0, P2, T2):
     ''' Find the intersection point of two lines in three-dimensional
     space. '''
-    V0, V1 = [normalize(T) for T in T0, T2]
+    V0, V1 = [normalize(T) for T in (T0, T2)]
     c = np.cross(V0, V1)
     den = norm(c)**2
     if np.allclose(den, 0.0):
@@ -36,7 +36,7 @@ def intersect_3D_lines(P0, T0, P2, T2):
 
 def intersect_line_plane(L0, L, P0, N):
     ''' Find the intersection point of a line and a plane. '''
-    L, N = [normalize(T) for T in L, N]
+    L, N = [normalize(T) for T in (L, N)]
     num = np.dot(P0 - L0, N)
     den = np.dot(L, N)
     if np.allclose(den, 0.0):
@@ -49,7 +49,7 @@ def intersect_line_plane(L0, L, P0, N):
 
 def intersect_three_planes(P0, N0, P1, N1, P2, N2):
     ''' Find the intersection point between three planes. '''
-    N0, N1, N2 = [normalize(N) for N in N0, N1, N2]
+    N0, N1, N2 = [normalize(N) for N in (N0, N1, N2)]
     N1N2 = np.cross(N1, N2)
     den = np.dot(N0, N1N2)
     if np.allclose(den, 0.0):
@@ -61,8 +61,8 @@ def intersect_three_planes(P0, N0, P1, N1, P2, N2):
 
 def angle(P, R, Q=[0,0,0]):
     ''' Return the angle (in deg) between the vectors QP and QR. '''
-    P, R, Q = [np.asfarray(V) for V in P, R, Q]
-    QP, QR = [normalize(V - Q) for V in P, R]
+    P, R, Q = [np.asarray(V) for V in (P, R, Q)]
+    QP, QR = [normalize(V - Q) for V in (P, R)]
     dot = np.dot(QP, QR)
     if dot < - 1.0 and np.allclose(dot, - 1.0):
         dot = - 1.0
@@ -74,20 +74,23 @@ def angle(P, R, Q=[0,0,0]):
 def signed_angle(A, B):
     ''' Find the signed, shortest angle (in degrees) between the 2D
     vectors A and B. '''
-    ang = np.arctan2(np.cross(A, B), np.dot(A, B))
+    # np.cross non accetta piu' vettori 2D (numpy >= 1.9): cross scalare manuale
+    A, B = np.asarray(A), np.asarray(B)
+    cross_z = A[0] * B[1] - A[1] * B[0]
+    ang = np.arctan2(cross_z, np.dot(A, B))
     return np.rad2deg(ang)
 
 def point_to_line(S, T, P):
     ''' Project a point P onto a line defined by the point S and
     direction vector T. '''
-    S, T, P = [np.asfarray(V) for V in S, T, P]
+    S, T, P = [np.asarray(V) for V in (S, T, P)]
     T = normalize(T)
     return S + np.dot(T, P - S) * T
 
 def point_to_plane(S, T, P):
     ''' Project a point P onto a plane defined by the point S and normal
     vector T. '''
-    S, T, P = [np.asfarray(V) for V in S, T, P]
+    S, T, P = [np.asarray(V) for V in (S, T, P)]
     T = normalize(T)
     return P - np.dot(T, P - S) * T
 
@@ -97,12 +100,12 @@ def eval_ders_trigo(u, k):
     ders = np.zeros((k + 1, 3))
     deri = {0: (' np.cos', ' np.sin'), 1: ('-np.sin', ' np.cos'),
             2: ('-np.cos', '-np.sin'), 3: (' np.sin', '-np.cos')}
-    for i in xrange(min(k + 1, 4)):
+    for i in range(min(k + 1, 4)):
         fx, fy = deri[i]
         ders[i,:2] = (eval('{0}({1})'.format(fx, u)),
                       eval('{0}({1})'.format(fy, u)))
     if k > 3:
-        for i in xrange(4, k + 1):
+        for i in range(4, k + 1):
             ders[i] = ders[i-4]
     return ders
 
@@ -113,7 +116,7 @@ def bounds(*os):
     if len(os) > 1:
         for o in os[1:]:
             b = o.bounds
-            for i in xrange(3):
+            for i in range(3):
                 bs[i] = (min(bs[i][0], b[i][0]),
                          max(bs[i][1], b[i][1]))
     return bs
@@ -122,7 +125,7 @@ def construct_flat_grid(Us, nums=None):
     ''' Construct a flattened, nonuniform (or optionally uniform)
     n-dimensional parametric grid.  Tried to use mgrid, but, unlike with
     linspace, I encountered floating point inaccuracies. '''
-    Us = [np.asfarray(U) for U in Us]
+    Us = [np.asarray(U) for U in Us]
     if nums is not None:
         Us = [np.linspace(U[0], U[-1], num)
               for U, num in zip(Us, nums)]

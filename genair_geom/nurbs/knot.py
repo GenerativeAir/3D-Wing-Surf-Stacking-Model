@@ -1,6 +1,6 @@
 import numpy as np
 
-import util
+from . import util
 
 
 # Many functions in this module rely on the fact the given knot vectors
@@ -45,7 +45,7 @@ def check_knot(U, u):
 
 def check_knot_v(U, u):
     ''' Idem check_knot, vectorized in u. '''
-    u = np.asfarray(u)
+    u = np.asarray(u)
     ur = np.round(u, decimals=NDEC)
     u[U[0] == ur] = U[0]; u[U[-1] == ur] = U[-1]
     if (u < U[0]).any() or (u > U[-1]).any():
@@ -68,7 +68,7 @@ def check_knot_vec(n, p, U):
         raise NonStrictlyIncreasingKnotVector(U)
 
     mult = find_int_mult_knot_vec(p, U)
-    multv = np.array(mult.values())
+    multv = np.array(list(mult.values()))
     if (multv > p).any():
         raise InteriorKnotMultiplicityGreaterThanOrder(p, mult)
 
@@ -81,10 +81,10 @@ def chord_length_param(n, Q):
     Assumes that the parameters lie in the range u in [0, 1]. '''
     Ub = np.zeros(n + 1)
     clk = np.zeros(n + 1)
-    for k in xrange(1, n + 1):
+    for k in range(1, n + 1):
         clk[k] = util.norm(Q[k] - Q[k-1])
     d = np.sum(clk)
-    for k in xrange(1, n):
+    for k in range(1, n):
         Ub[k] = Ub[k-1] + clk[k] / d
     Ub[n] = 1.0
     return Ub
@@ -94,10 +94,10 @@ def centripetal_param(n, Q):
     Assumes that the parameters lie in the range u in [0, 1]. '''
     Ub = np.zeros(n + 1)
     clk = np.zeros(n + 1)
-    for k in xrange(1, n + 1):
+    for k in range(1, n + 1):
         clk[k] = np.sqrt(util.norm(Q[k] - Q[k-1]))
     d = np.sum(clk)
-    for k in xrange(1, n):
+    for k in range(1, n):
         Ub[k] = Ub[k-1] + clk[k] / d
     Ub[n] = 1.0
     return Ub
@@ -108,16 +108,16 @@ def skinned_param(n, m, Q):
     clk = np.zeros((n + 1, m + 1))
     di = np.zeros(n + 1)
     Pki = Q[0]
-    for k in xrange(1, m + 1):
+    for k in range(1, m + 1):
         Pk = Q[k]
-        for i in xrange(n + 1):
+        for i in range(n + 1):
             clk[i,k] = util.norm(Pk[i] - Pki[i-1])
         Pki = Pk
-    for i in xrange(n + 1):
+    for i in range(n + 1):
         di[i] = np.sum(clk[i])
-    for k in xrange(1, m):
+    for k in range(1, m):
         sumi = 0.0
-        for i in xrange(n + 1):
+        for i in range(n + 1):
             sumi += clk[i,k] / di[i]
         Ub[k] = Ub[k-1] + 1.0 / (n + 1) * sumi
     Ub[m] = 1.0
@@ -131,7 +131,7 @@ def uni_knot_vec(n, p):
     ''' Construct a uniform and normalized knot vector, i.e. all
     interior knots are equally spaced and lie in [0, 1]. '''
     U = np.zeros(n + p + 2)
-    for j in xrange(1, n - p + 1):
+    for j in range(1, n - p + 1):
         U[j+p] = float(j) / (n - p + 1)
     U[-p-1:] = 1.0
     clean_knot_vec(U)
@@ -141,7 +141,7 @@ def averaging_knot_vec(n, p, Ub):
     ''' Construct a knot vector based on averaging, a method that
     reflects the distribution of the parameter values Ub. '''
     U = np.zeros(n + p + 2)
-    for j in xrange(1, n - p + 1):
+    for j in range(1, n - p + 1):
         U[j+p] = np.sum(Ub[j:j+p]) / p
     U[:p+1], U[-p-1:] = Ub[0], Ub[-1]
     clean_knot_vec(U)
@@ -155,16 +155,16 @@ def end_derivs_knot_vec(n, p, k, l, Ub):
     knots are obtained. '''
     U = np.zeros(n + k + l + p + 2)
     m = n + k + l
-    for i in xrange(p + 1):
+    for i in range(p + 1):
         U[i] = Ub[0]
         U[m+i+1] = Ub[n]
     istt, iend = 1 - k, n - p + l
     r = p
-    for i in xrange(istt, iend + 1):
+    for i in range(istt, iend + 1):
         js, je = max(0, i), min(n, i + p - 1)
         r += 1
         sm = 0
-        for j in xrange(js, je + 1):
+        for j in range(js, je + 1):
             sm += Ub[j]
         U[r] = sm / (je - js + 1)
     clean_knot_vec(U)
@@ -175,7 +175,7 @@ def approximating_knot_vec(n, p, r, Ub):
     Each knot span is guaranteed to contain at least one ubk. '''
     U = np.zeros(n + p + 2)
     d = float(r + 1) / (n - p + 1)
-    for j in xrange(1, n - p + 1):
+    for j in range(1, n - p + 1):
         i = int(j * d)
         alf = j * d - i
         U[p+j] = (1.0 - alf) * Ub[i-1] + alf * Ub[i]
@@ -187,30 +187,30 @@ def approximating_knot_vec_end(n, p, r, k, l, Ub):
     ''' Construct a knot vector especially for approximation problems
     with end derivatives specified. '''
     U = np.zeros(n + p + 2)
-    for i in xrange(p + 1):
+    for i in range(p + 1):
         U[i], U[n+i+1] = Ub[0], Ub[r]
     nc = n - k - l
     w = np.zeros(nc + 1)
     inc = float(r + 1) / float(nc + 1)
     low = high = 0
     d = -1
-    for i in xrange(nc + 1):
+    for i in range(nc + 1):
         d += inc
         high = int(np.floor(d + 0.5))
         sum = 0.0
-        for j in xrange(low, high + 1):
+        for j in range(low, high + 1):
             sum += Ub[j]
         w[i] = sum / (high - low + 1)
         low = high + 1
     it = 1 - k
     ie = nc - p + l
     r = p
-    for i in xrange(it, ie + 1):
+    for i in range(it, ie + 1):
         js = max(0, i)
         je = min(nc, i + p - 1)
         r += 1
         sum = 0
-        for j in xrange(js, je + 1):
+        for j in range(js, je + 1):
             sum += w[j]
         U[r] = sum / (je - js + 1)
     clean_knot_vec(U)
@@ -224,14 +224,14 @@ def normalize_knot_vec(U):
     ''' Normalize all knots (or parameter values) to [0, 1] (IN-PLACE).
     '''
     u0, um = U[0], U[-1]
-    U[:] = (np.asfarray(U) - u0) / (um - u0)
+    U[:] = (np.asarray(U) - u0) / (um - u0)
     clean_knot_vec(U)
 
 def remap_knot_vec(U, u0, um):
     ''' Remap all knots (or parameter values) to [u0, um] (IN-PLACE).
     '''
     normalize_knot_vec(U)
-    U[:] = u0 + np.asfarray(U) * (um - u0)
+    U[:] = u0 + np.asarray(U) * (um - u0)
     clean_knot_vec(U)
 
 

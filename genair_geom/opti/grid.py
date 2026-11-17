@@ -63,7 +63,7 @@ class Grid(PlotObject):
             nblk = read_nblk()
             jkmmax = np.zeros((3, nblk), dtype='i', order='F')
             read_header(jkmmax, nblk)
-            for ib in xrange(nblk):
+            for ib in range(nblk):
                 nxyz = np.append(jkmmax[:,ib], 3)
                 xyz = np.zeros(nxyz, order='F')
                 read_one_block(jkmmax[:,ib], 3, xyz)
@@ -115,7 +115,7 @@ class Grid(PlotObject):
             assert nblk == len(self.blk)
 
             i0, i1 = 1, 1
-            for i in xrange(nsfc):
+            for i in range(nsfc):
                 typ, ib, side, dit = read_line()
                 blk, udi = self.blk[ib-1], self.EXTRACTMAP[side]
                 face = blk.extract(*udi)
@@ -241,7 +241,7 @@ class Grid(PlotObject):
                 jkmmax = xyz.shape[:-1]
                 xyzq = np.concatenate((xyz, q), axis=-1)
                 xyzq = xyzq.flatten(order='F')
-                fcl = np.array(fcl); nfcl = fcl.size / 4
+                fcl = np.array(fcl); nfcl = fcl.size // 4
                 write_zone_header(FName, nfcl, *jkmmax)
                 write_zone_data(xyzq.size, xyzq)
                 write_face_connections(fcl)
@@ -290,7 +290,7 @@ class Grid(PlotObject):
                 cvol = ControlVolume(Pw=Pw)
                 blk.map = Map(cvol, (3,3,3))
                 blk.map.indx = blk.indx
-            nnode = sum([blk.map.cobj.Pw.size for blk in self.blk]) / 4
+            nnode = sum([blk.map.cobj.Pw.size for blk in self.blk]) // 4
             print('{} has {} nonunique nodes.'.format(map_file, nnode))
         finally:
             close_file()
@@ -314,7 +314,7 @@ class Grid(PlotObject):
             fh.readline()
             fh.readline()
 
-            for ip in xrange(nptch):
+            for ip in range(nptch):
                 line = read_line_split(fh)
                 im, side, dof = line[1:]
                 map, udi = self.blk[im-1].map, self.EXTRACTMAP[side]
@@ -332,7 +332,7 @@ class Grid(PlotObject):
             fh.readline()
             fh.readline()
 
-            for i in xrange(nstch):
+            for i in range(nstch):
                 line = read_line_split(fh)
                 ip, edge, di = (np.zeros(2, dtype='i'),
                                 np.zeros(2, dtype='i'),
@@ -381,7 +381,7 @@ class Grid(PlotObject):
                       .format('patch', 'map', 'side', 'dof'))
             FRMT = '{:5}{:8}{:4}{:7}\n'
 
-            for i in xrange(nptch):
+            for i in range(nptch):
                 ptch = self.ptch[i]
                 fh.write(FRMT.format(ptch.indx, ptch.map, ptch.side, ptch.dof))
 
@@ -393,7 +393,7 @@ class Grid(PlotObject):
                               'edge', 'dir'))
             FRMT = '{:5}{:7}{:7}{:6}{:10}{:6}{:8}\n'
 
-            for i in xrange(nstch):
+            for i in range(nstch):
                 stch = self.stch[i]
                 fh.write(FRMT.format(stch.indx, 0 if stch.joined else 1,
                                      stch.dof, stch.conty, stch.ptch[0],
@@ -413,7 +413,7 @@ class Grid(PlotObject):
             FRMT0 = '{:5}{:4}{:12}\n'
             FRMT1 = '{:29}{:6}{:5}\n'
 
-            for i in xrange(nffd):
+            for i in range(nffd):
                 ffd = ffds[i]
                 ne = len(ffd.embedded)
                 fh.write(FRMT0.format(i + 1, 7, ne))
@@ -449,7 +449,7 @@ class Block(Volume):
     def __getstate__(self):
         d = self.__dict__.copy()
         save = {'_cobj', '_p', '_U', 'indx', 'xyz', 'q', 'map', 'fcl'}
-        ds = d.viewkeys() - save
+        ds = d.keys() - save
         for k in ds:
             del d[k]
         return d
@@ -487,7 +487,7 @@ class Interface(Face):
         d = self.__dict__.copy()
         save = {'_cobj', '_p', '_U', '_trimcurves', 'indx', 'type', 'blk',
                 'side', 'dit1', 'dit2'}
-        ds = d.viewkeys() - save
+        ds = d.keys() - save
         for k in ds:
             del d[k]
         return d
@@ -505,7 +505,7 @@ class Boundary(Face):
         d = self.__dict__.copy()
         save = {'_cobj', '_p', '_U', '_trimcurves', 'indx', 'type', 'blk',
                 'side', 'dit'}
-        ds = d.viewkeys() - save
+        ds = d.keys() - save
         for k in ds:
             del d[k]
         return d
@@ -525,7 +525,7 @@ class Map(Volume):
     def __getstate__(self):
         d = self.__dict__.copy()
         save = {'_cobj', '_p', '_U', 'indx'}
-        ds = d.viewkeys() - save
+        ds = d.keys() - save
         for k in ds:
             del d[k]
         return d
@@ -541,7 +541,7 @@ class Patch(Surface):
         d = self.__dict__.copy()
         save = {'_cobj', '_p', '_U', '_trimcurves', 'indx', 'map', 'side',
                 'dof'}
-        ds = d.viewkeys() - save
+        ds = d.keys() - save
         for k in ds:
             del d[k]
         return d
@@ -567,7 +567,7 @@ class Stitch(Curve):
         d = self.__dict__.copy()
         save = {'_cobj', '_p', '_U', 'indx', 'joined', 'dof', 'conty', 'ptch',
                 'edge', 'dir'}
-        ds = d.viewkeys() - save
+        ds = d.keys() - save
         for k in ds:
             del d[k]
         return d
@@ -644,11 +644,11 @@ def build_face_connection_lists(grid):
             jkmf[it2] = jkms[it2] + bit[it2] * (dit[1,2] - 1)
 
             cell_index = []
-            for jdi in xrange(jkms[di], jkmf[di], bit[di]):
+            for jdi in range(jkms[di], jkmf[di], bit[di]):
                 jkm[di] = jdi
-                for jit1 in xrange(jkms[it1], jkmf[it1], bit[it1]):
+                for jit1 in range(jkms[it1], jkmf[it1], bit[it1]):
                     jkm[it1] = jit1
-                    for jit2 in xrange(jkms[it2], jkmf[it2], bit[it2]):
+                    for jit2 in range(jkms[it2], jkmf[it2], bit[it2]):
                         jkm[it2] = jit2
                         J, K, M = jkm
                         # Tecplot's cell index definition

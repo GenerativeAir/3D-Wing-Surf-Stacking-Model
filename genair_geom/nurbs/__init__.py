@@ -1,14 +1,14 @@
-import basis
-import conics
-import curve
-import fit
-import iges
-import knot
-import point
-import surface
-import transform
-import util
-import volume
+from . import basis
+from . import conics
+from . import curve
+from . import fit
+from . import iges
+from . import knot
+from . import point
+from . import surface
+from . import transform
+from . import util
+from . import volume
 
 
 tools = (curve.make_linear_curve,

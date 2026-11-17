@@ -37,7 +37,7 @@ class Axes(object):
         for k in self.f.pos:
             for po in self.f.pos[k]:
                 n = po.bounds
-                for i in xrange(3):
+                for i in range(3):
                     b[i] = (min(b[i][0], n[i][0]),
                             max(b[i][1], n[i][1]))
 
@@ -59,12 +59,12 @@ class Axes(object):
         rmax = min(rmax,   maxd)
         rsteps = int((rmax - rmin) / stride)
         return ([rmin] +
-                [rmin + e * stride for e in xrange(1, rsteps + 1)] +
+                [rmin + e * stride for e in range(1, rsteps + 1)] +
                 [rmax])
 
     def adjust_axes(self):
         self.adjust_bounds()
-        for i in xrange(3):
+        for i in range(3):
             self.recalculate_axis_ticks(i)
         self.render_object.fill_batch()
 

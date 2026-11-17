@@ -1,6 +1,10 @@
 """
 predict_fast.py — come predict.py, ma con cache del dataset.
 Prima esecuzione: lenta (costruisce la cache). Dalla seconda: istantanea.
+
+Salva inoltre il profilo generato come .dat (formato Lednicer) in
+genair_geom/play/airfoils/, pronto per essere caricato da geom.airfoil.Airfoil
+(es. Airfoil('airfoils/generated_<nome>.dat') negli script di play/).
 """
 import pickle
 from pathlib import Path
@@ -10,8 +14,7 @@ import torch
 import matplotlib.pyplot as plt
 
 from src.Autoencoder_m1 import AeroToAirfoil
-from src.config import RESULTS_DIR, WEIGHTS_FILE_INVERSE, ROOT_DIR, POLARS_DIR
-from src.run_xfoil import run_generated_profile_with_xfoil
+from src.config import RESULTS_DIR, WEIGHTS_FILE_INVERSE, ROOT_DIR, POLARS_DIR, PROJECT_ROOT
 
 PREDICT_RANDOM_SEED = 42
 RUN_XFOIL = True
@@ -20,6 +23,9 @@ ALPHA_TOL = 1.0e-6
 
 CACHE_FILE = Path(__file__).resolve().parent / "data" / "cache" / "inverse_test.pkl"
 FEATURE_NAMES = ["log10_re", "ncrit", "alpha", "cl", "cd", "cdp", "cm", "top_xtr", "bot_xtr"]
+
+# Cartella .dat di genair_geom (genair_ml/ e genair_geom/ sono cartelle sorelle nella repo).
+GEOM_AIRFOILS_DIR = PROJECT_ROOT.parent / "genair_geom" / "play" / "airfoils"
 
 
 class CachedInverseDataset:
@@ -97,6 +103,68 @@ def choose_random_sample_with_alpha(test_dataset, target_alpha,
     return int(np.random.default_rng(seed).choice(candidates))
 
 
+def save_generated_dat(y_profile, output_dat, x_grid, name="generated_airfoil"):
+    """Scrive il profilo generato come .dat in formato Lednicer.
+
+    È il formato letto da genair_geom (geom.airfoil.Airfoil._load): riga 1 nome,
+    riga 2 numero di punti (dorso, pancia), poi il blocco dorso LE->TE e il
+    blocco pancia LE->TE. Le 100 ordinate del modello (50 dorso + 50 pancia)
+    vengono scritte sulla griglia coseno x_grid, in ordine di x crescente.
+    """
+
+    y = np.asarray(y_profile, dtype=float).reshape(-1)
+    if y.shape[0] != 100:
+        raise ValueError(f"Mi aspettavo 100 ordinate y, trovate {y.shape[0]}")
+
+    x = np.asarray(x_grid, dtype=float)
+    if x.shape[0] != 50:
+        raise ValueError(f"Mi aspettavo una griglia x da 50 punti, trovati {x.shape[0]}")
+    y_upper = y[:50]
+    y_lower = y[50:]
+
+    output_dat.parent.mkdir(parents=True, exist_ok=True)
+    with output_dat.open("w", encoding="utf-8") as f:
+        f.write(f"{name}\n")
+        f.write(f"{len(x):>7.0f}. {len(x):>8.0f}.\n\n")
+        for xi, yi in zip(x, y_upper):
+            f.write(f"{xi: .7f} {yi: .7f}\n")
+        f.write("\n")
+        for xi, yi in zip(x, y_lower):
+            f.write(f"{xi: .7f} {yi: .7f}\n")
+
+
+
+def run_generated_profile_with_neuralfoil(y_profile, cond, x_grid):
+    """Valuta il profilo generato con NeuralFoil (sostituto rapido di XFOIL).
+
+    Serve solo come fallback quando l'eseguibile XFOIL non è installato:
+    NeuralFoil è una rete addestrata proprio su polari XFOIL, quindi i numeri
+    sono confrontabili (errore medio dichiarato su CD: ~0.4-2% vs XFOIL).
+    Restituisce un dict con le stesse chiavi usate per stampare la polar XFOIL.
+    """
+    import neuralfoil  # già nelle dipendenze (requirements.txt)
+
+    y = np.asarray(y_profile, dtype=float).reshape(-1)
+    x = np.asarray(x_grid, dtype=float)
+    # Coordinate in ordine Selig: TE dorso -> LE -> TE pancia.
+    coords = np.concatenate(
+        [np.column_stack([x[::-1], y[:50][::-1]]), np.column_stack([x[1:], y[50:][1:]])],
+        axis=0,
+    )
+    out = neuralfoil.get_aero_from_coordinates(
+        coordinates=coords,
+        alpha=cond["alpha"],
+        Re=cond["re"],
+        n_crit=cond["ncrit"],
+        xtr_upper=cond["top_xtr"],
+        xtr_lower=cond["bot_xtr"],
+        model_size="xxlarge",
+    )
+    keys = ["CL", "CD", "CM", "Top_Xtr", "Bot_Xtr", "analysis_confidence"]
+    return {k: float(np.asarray(out[k]).reshape(-1)[0]) for k in keys}
+
+
+
 def main():
     test_dataset = load_or_build_test_dataset()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -122,6 +190,7 @@ def main():
         print(f"  {key}: {cond[key]}")
     print(f"\nairfoil_name: {meta['airfoil_name']}\npolar_file: {meta['polar_file']}")
 
+    # Plot: profilo generato vs target
     x = test_dataset.x_fixed
     plt.figure(figsize=(8, 4))
     plt.plot(x, pred_y[:50], label="Dorso generato")
@@ -133,18 +202,46 @@ def main():
     plt.grid(True)
     plt.show()
 
+    # Analisi a valle: XFOIL se installato, altrimenti NeuralFoil.
+    # Il .dat viene salvato SOLO dopo che l'analisi è andata a buon fine.
+    analysis_ok = False
     if RUN_XFOIL:
-        print("\nEseguo XFOIL sul profilo generato...")
-        polar = run_generated_profile_with_xfoil(
-            y_profile=pred_y,
-            reynolds=round(cond["re"]),
-            ncrit=round(cond["ncrit"]),
-            alpha=cond["alpha"],
-            work_dir=RESULTS_DIR / "xfoil_inverse_test",
-            name=f"generated_{meta['airfoil_name']}",
-        )
-        print("\nRisultato XFOIL sul profilo generato:")
-        print(polar.to_string(index=False))
+        from src.run_xfoil import find_xfoil_executable, run_generated_profile_with_xfoil
+        try:
+            find_xfoil_executable()
+        except FileNotFoundError:
+            print("\nXFOIL non trovato: lo salto e valuto il profilo con NeuralFoil "
+                  "(rete addestrata su polari XFOIL).")
+            nf = run_generated_profile_with_neuralfoil(pred_y, cond, test_dataset.x_fixed)
+            print("\nRisultato NeuralFoil sul profilo generato:")
+            print(f"  CL: {nf['CL']:.6f}   CD: {nf['CD']:.6f}   CM: {nf['CM']:.6f}")
+            print(f"  Top_Xtr: {nf['Top_Xtr']:.6f}   Bot_Xtr: {nf['Bot_Xtr']:.6f}")
+            print(f"  analysis_confidence: {nf['analysis_confidence']:.3f}")
+            print("  (per la polar XFOIL esatta: installa XFOIL e rilancia)")
+            analysis_ok = True
+        else:
+            print("\nEseguo XFOIL sul profilo generato...")
+            polar = run_generated_profile_with_xfoil(
+                y_profile=pred_y,
+                reynolds=round(cond["re"]),
+                ncrit=round(cond["ncrit"]),
+                alpha=cond["alpha"],
+                work_dir=RESULTS_DIR / "xfoil_inverse_test",
+                name=f"generated_{meta['airfoil_name']}",
+            )
+            print("\nRisultato XFOIL sul profilo generato:")
+            print(polar.to_string(index=False))
+            analysis_ok = True
+
+    # Salvataggio del .dat a valle dell'analisi: il file esiste solo se il
+    # profilo è stato effettivamente valutato (o se l'analisi è disattivata
+    # con RUN_XFOIL = False, nel qual caso si salva direttamente).
+    if analysis_ok or not RUN_XFOIL:
+        dat_path = GEOM_AIRFOILS_DIR / f"generated_{meta['airfoil_name']}.dat"
+        save_generated_dat(pred_y, dat_path, x_grid=test_dataset.x_fixed, name=dat_path.stem)
+        print(f"\nProfilo generato salvato in: {dat_path}")
+    else:
+        print("\nAnalisi non eseguita: .dat non salvato.")
 
 
 if __name__ == "__main__":

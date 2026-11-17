@@ -3,9 +3,9 @@ import traceback
 
 import numpy as np
 
-import curve
-import point
-import surface
+from . import curve
+from . import point
+from . import surface
 
 
 class Entity(object):
@@ -145,7 +145,7 @@ class ParameterData(object):
         fh.seek((ParameterDataSection.file_line_number +
                  ParameterDataSection.sequence_number - 1) * NCOL)
         lines = []
-        for i in xrange(ParameterData.current_line_count):
+        for i in range(ParameterData.current_line_count):
             lines += [fh.readline().strip()]
         self.params = from_free_formatted_data(lines, last=64)
 
@@ -197,7 +197,7 @@ class ParameterData126(ParameterData):
         params += [0, 0, 0 if self.curve.isrational else 1, 0]
         params += U.tolist()
         params += Pw[:,-1].tolist()
-        for i in xrange(n + 1):
+        for i in range(n + 1):
             params += (Pw[i,:3] / Pw[i,-1]).tolist()
         params += [U[0], U[-1], 0.0, 0.0, 0.0]
         return super(ParameterData126, self).unparse([126] + params)
@@ -240,10 +240,10 @@ class ParameterData128(ParameterData):
         params += [0, 0, 0 if self.surface.isrational else 1, 0, 0]
         params += U.tolist()
         params += V.tolist()
-        for j in xrange(m + 1):
+        for j in range(m + 1):
             params += Pw[:,j,-1].tolist()
-        for j in xrange(m + 1):
-            for i in xrange(n + 1):
+        for j in range(m + 1):
+            for i in range(n + 1):
                 params += (Pw[i,j,:-1] / Pw[i,j,-1]).tolist()
         params += [U[0], U[-1]]
         params += [V[0], V[-1]]
@@ -347,7 +347,7 @@ class DataSection(Section):
             fh.seek((DirectoryEntrySection.file_line_number +
                      DirectoryEntrySection.sequence_number - 1) * NCOL)
 
-        for de in xrange((ParameterDataSection.file_line_number -
+        for de in range((ParameterDataSection.file_line_number -
                           DirectoryEntrySection.file_line_number) // 2):
             position_fo()
             enum = int(fh.readline()[:8]); position_fo()

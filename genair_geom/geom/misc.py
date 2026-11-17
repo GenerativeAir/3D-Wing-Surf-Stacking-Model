@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.integrate import quad
 
-from part            import Part
+from .part import Part
 
 from nurbs.knot      import normalize_knot_vec
 from nurbs.surface   import (make_ruled_surface,
@@ -103,7 +103,7 @@ class Nacelle(Part):
         #    rad = np.deg2rad(ang)
         #    N = [np.cos(rad), 0, np.sin(rad)]
         #    n, dummy = nurbs.cobj.n
-        #    for i in xrange(n + 1):
+        #    for i in range(n + 1):
         #        Pw = nurbs.cobj.Pw[i]
         #        L0 = Pw[0,:3]
         #        P = intersect_line_plane(L0, [1,0,0], [0,0,0], N)
@@ -156,12 +156,12 @@ def split_wing(wing, u):
     (T0, T1), (Bv0, Bv1) = wing.T.split(u), wing.Bv.split(u)
     n0, n1 = wing.nurbs.split(u, 1)
 
-    for c in T0, T1, Bv0, Bv1:
+    for c in (T0, T1, Bv0, Bv1):
         normalize_knot_vec(c.U[0])
     w0.T, w0.Bv = T0, Bv0
     w1.T, w1.Bv = T1, Bv1
 
-    for s in n0, n1:
+    for s in (n0, n1):
         normalize_knot_vec(s.U[1])
     w0._halve(n0)
     w1._halve(n1)
@@ -176,17 +176,17 @@ def split_wing(wing, u):
         scz0, scz1 = scz.split(u)
 
     if Tw:
-        for c in Tw0, Tw1:
+        for c in (Tw0, Tw1):
             normalize_knot_vec(c.U[0])
         w0.Tw = Tw0
         w1.Tw = Tw1
     if scx:
-        for c in scx0, scx1:
+        for c in (scx0, scx1):
             normalize_knot_vec(c.U[0])
         w0.scs[0] = scx0
         w1.scs[0] = scx1
     if scz:
-        for c in scz0, scz1:
+        for c in (scz0, scz1):
             normalize_knot_vec(c.U[0])
         w0.scs[2] = scz0
         w1.scs[2] = scz1
@@ -213,7 +213,7 @@ def get_Lq_from_design_Cls(wing, Cl0, Cl1):
     #wing.glue(); wing.sweep = 0
     #b = param_to_arc_length(wing.T)
     #b = np.abs(b * np.cos(np.deg2rad(wing.dihedral)))
-    print b
+    print(b)
 
     # L/q = int_0^b c(y) * Cl(y) dy
     cCl = lambda u: wing.scs[0].eval_point(u)[0] * \
